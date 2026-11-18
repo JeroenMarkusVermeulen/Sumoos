@@ -2,43 +2,64 @@
 
 <section class="hero-section">
     <div class="hero-content">
-        <h1>Sumoos: Our Sumobot Project</h1>
-        <p>We are building an autonomous sumobot for our final year IT project. Fast, strong, and smart.</p>
+        <img src="images/logo.jpg" alt="Sumoos Logo" class="hero-logo">
+        <h1>Engineering the Future of Combat Robotics</h1>
+        <p>Autonomous and manual sumobots built for competitive robot sumo.</p>
         <div class="hero-buttons">
-            <a href="about.php" class="btn">Read more</a>
-            <a href="contact.php" class="btn btn-secondary">Contact us</a>
+            <a href="about.php" class="btn">Meet the Team</a>
+            <a href="contact.php" class="btn btn-secondary">Get in Touch</a>
         </div>
     </div>
 </section>
 
 <section class="content-section">
-    <h2 class="section-title">How it works</h2>
-    <div class="grid-container half">
+    <h2 class="section-title">The Sport</h2>
+    <p class="section-intro">Push the opponent out of the ring to win. Fast, aggressive, and smart.</p>
+    
+    <div class="grid-container triple">
         <div class="card">
-            <h3>Autonomous Mode</h3>
-            <p>The robot drives itself using sensors. We programmed it to search for the opponent and push them out of the ring automatically without any human help.</p>
+            <h3>The Arena</h3>
+            <p>Matches take place in a circular ring (Dohyo) with a black surface and a white border.</p>
         </div>
         <div class="card">
-            <h3>Remote Control Mode</h3>
-            <p>We can also control the robot manually with a controller using Bluetooth or Wi-Fi, just in case we want to drive it ourselves during testing.</p>
+            <h3>Boundary Protection</h3>
+            <p>Sensors detect the white line to trigger an automatic reverse and prevent self-elimination.</p>
+        </div>
+        <div class="card">
+            <h3>Victory</h3>
+            <p>First robot to touch the floor outside the ring loses the match.</p>
         </div>
     </div>
 </section>
 
 <section class="content-section bg-darker">
-    <h2 class="section-title">Hardware & Software</h2>
+    <h2 class="section-title">Operational Modes</h2>
+    <div class="grid-container half">
+        <div class="card">
+            <h3>Autonomous Mode</h3>
+            <p>Fully independent. Uses proximity sensors to track opponents and make split-second attack decisions.</p>
+        </div>
+        <div class="card">
+            <h3>Manual RC Mode</h3>
+            <p>Driven via a custom Arduino controller. Commands are routed through a .NET app and MQTT Wi-Fi to the robot.</p>
+        </div>
+    </div>
+</section>
+
+<section class="content-section">
+    <h2 class="section-title">Tech Stack</h2>
     <div class="grid-container triple">
         <div class="card">
-            <h4>Sensors</h4>
-            <p>We use ultrasonic sensors to find the enemy, and line sensors on the bottom so the bot doesn't accidentally drive out of the ring.</p>
+            <h4>Hardware</h4>
+            <p>Pololu Zumo 2040 chassis with 75:1 high-torque motors and an added ESP32 for Wi-Fi.</p>
         </div>
         <div class="card">
-            <h4>Motors</h4>
-            <p>Strong DC motors with grippy wheels give the bot enough pushing power to win the matches.</p>
+            <h4>Communication</h4>
+            <p>Arduino &rarr; USB &rarr; .NET App &rarr; Docker MQTT Broker &rarr; Wi-Fi &rarr; ESP32.</p>
         </div>
         <div class="card">
-            <h4>The Code</h4>
-            <p>Everything is programmed in C++ and PHP. We wrote our own logic for the search and attack movements, and built this website to document it.</p>
+            <h4>Software</h4>
+            <p>MicroPython for Zumo, C++ for ESP32/Arduino, C# for .NET, and PHP/HTML/CSS for this website.</p>
         </div>
     </div>
 </section>
