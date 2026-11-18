@@ -1,0 +1,187 @@
+SUMOOS - PROJECT INFORMATION
+============================
+Updated: 18 November 2026
+Status: project plan. Hardware purchase, assembly, integration and performance
+have not been confirmed. No measured detection range, latency or win rate exists.
+
+1. PROJECT IDEA
+Two robots compete in a marked ring on a flat surface. The objective is to push
+the opponent outside the ring. The first version uses one autonomous robot and
+one robot controlled by a player. Boundary protection should prevent accidental
+self-exits; it cannot guarantee staying inside when an opponent pushes the robot.
+
+The accompanying Sumoos_Pitch.pptx is the original eight-slide English pitch with
+speaker notes. It describes the initial concept. The hardware proposal and wiring
+below were discussed after that presentation; the presentation is unchanged.
+
+2. TEAM RESPONSIBILITIES
+Oliver: autonomous robot, opponent detection, searching and attacking.
+Vlad: Arduino controller for the manually controlled robot.
+Ramazan: business website and About Us page.
+Jeroen: .NET application, controller input and robot communication.
+Everyone: interface agreement, integration, testing and demonstration.
+
+3. MOSCOW REQUIREMENTS
+Must:
+- Two robots that drive forwards/backwards and turn.
+- Autonomous opponent detection, approach and pushing behaviour.
+- Manual driving through an Arduino controller.
+- Ring boundary detection and local movement override on both robots.
+- Accessible stop mechanism and automatic stop after command loss.
+- .NET communication application.
+- Business website explaining the concept, match and team.
+
+Should:
+- Connection and operating-state indicators.
+- Adjustable speed for testing.
+- Consistent interfaces and useful status feedback.
+
+Could:
+- Browser-based remote control.
+- Match timer, scores and results.
+
+Outside the initial scope:
+- Public-internet control.
+- Autonomous mode on both robots.
+These can be reconsidered after a reliable first demonstration.
+
+4. CURRENT HARDWARE PROPOSAL
+Two identical Pololu Zumo 2040 robots, assembled with 75:1 HP motors
+(Pololu item 5012), plus ESP32 Wi-Fi communication boards as needed.
+The Zumo 2040 has an RP2040 controller, motor drivers, encoders, proximity sensors,
+downward-facing reflectance sensors and an IMU. It does NOT have built-in Wi-Fi.
+Do not confuse it with a Zumo 32U4 or the Zumo shield for Arduino:
+their wiring and software differ.
+
+Example communication board:
+ESP32-DevKitC V4 with ESP32-WROOM module and accessible GPIO16/GPIO17.
+The following wiring does not automatically apply to ESP32-C3, ESP32-S3 or
+WROVER boards. Verify the exact board before purchasing or connecting.
+
+Other items:
+- Four AA batteries per Zumo; rechargeable NiMH and a suitable charger preferred.
+- Appropriate programming/data USB cables.
+- Headers, insulated wires and secure mounting hardware.
+- Local Wi-Fi network accessible by the laptop and robots.
+- Arduino joystick/buttons controller with USB connection to the laptop.
+The autonomous robot only needs an ESP32 if remote start/stop or telemetry is wanted.
+No robot-to-robot wireless communication is required for opponent detection.
+
+5. PROPOSED COMMUNICATION ARCHITECTURE
+Arduino controller -> USB serial -> .NET application on laptop
+.NET application -> MQTT broker running in Docker on laptop
+MQTT broker -> local Wi-Fi -> ESP32 on robot
+ESP32 -> UART serial -> Zumo 2040 controller -> motors
+
+Status messages can travel back in the opposite direction.
+The website is initially a separate project/business page, not a required control UI.
+Docker runs the broker; MQTT is the messaging protocol.
+The .NET application runs on the laptop, not on the Zumo or ESP32.
+Configure the broker's exposed port, laptop firewall and LAN address so the ESP32
+can reach it. School Wi-Fi can block communication between devices; test the
+actual network early. Do not commit Wi-Fi passwords or broker credentials.
+
+6. ZUMO 2040 TO ESP32 WIRING
+UART is the recommended connection. Wire with power disconnected.
+Zumo GP28 (UART0 TX) -> ESP32 GPIO16 (UART RX)
+Zumo GP29 (UART0 RX) -> ESP32 GPIO17 (UART TX)
+Zumo GND             -> ESP32 GND
+
+TX connects to RX. These are GPIO identifiers, not physical header-pin numbers.
+Pololu identifies GP28 and GP29 as unused expansion pins, so the display and
+on-board sensors can remain connected. Both sides use 3.3 V logic.
+Never apply 5 V logic or battery voltage to these GPIO connections.
+Expansion headers may need soldering.
+
+Serial configuration on both boards: 115200 baud, 8 data bits, no parity, 1 stop bit.
+
+ESP32 Arduino initialisation (WROOM example):
+Serial2.begin(115200, SERIAL_8N1, 16, 17);
+
+Zumo MicroPython initialisation:
+from machine import UART, Pin
+esp32 = UART(0, baudrate=115200, tx=Pin(28), rx=Pin(29))
+
+These lines only initialise UART. They are not complete robot firmware.
+
+7. POWER
+Initial bench test:
+Power the ESP32 through its USB connector and power the Zumo normally.
+Connect only TX, RX and GND between the boards.
+Do not connect their positive supply rails in this test setup.
+
+For untethered operation with the specified ESP32-DevKitC V4:
+Zumo 3V3 -> ESP32 3V3, plus shared GND.
+Pololu states that typically up to 1.5 A is available for added devices from 3V3
+when the Zumo operates on batteries. Verify stable operation under motor load
+and Wi-Fi transmission.
+
+Espressif specifies using only one DevKitC power input at a time.
+Disconnect the Zumo-to-ESP32 3V3 wire before powering/programming the ESP32 by USB.
+Do not connect VBAT, VSW or VBST directly to ESP32 3V3.
+Check the exact ESP32 board's power requirements before using another model.
+
+8. PROPOSED COMMAND INTERFACE AND STOP BEHAVIOUR
+Agree the final message format before the team implements separate components.
+Example UART lines, terminated with a newline:
+DRIVE,150,150
+DRIVE,-100,100
+STOP
+
+The two DRIVE values represent left/right motor commands. Their scale, limits
+and direction convention still need agreement with the chosen motor library.
+Validate commands and clamp motor values in the Zumo firmware.
+
+Suggested initial control behaviour (design targets, not measured results):
+- Send fresh drive commands about 20 times per second.
+- Stop if the Zumo receives no valid fresh drive command for 250 ms.
+- Tune the interval and timeout during tests.
+- Reject malformed, out-of-range, stale or out-of-order commands.
+- Start stopped after boot, reset, reconnect or mode change.
+- Require explicit re-arming after a connection-loss stop.
+- Let boundary protection and a stop request override driving commands.
+- Keep autonomous decisions and boundary checks local to the Zumo.
+- Do not retain driving MQTT messages or replay queued driving commands.
+- Do not let the ESP32 repeatedly forward an old command after MQTT input stops.
+Use timestamps/expiry and sequence numbers in the final protocol as appropriate.
+A robot-side timeout is still needed even if MQTT provides disconnect messages.
+
+9. INTEGRATION AND ACCEPTANCE TESTS
+1. Confirm the exact board variants, ring dimensions, boundary colour and rules.
+2. Assemble both robots and test low-speed motor directions with tracks lifted.
+3. Establish a UART exchange and confirm command/status directions.
+4. Connect the ESP32 to Wi-Fi and the Docker broker.
+5. Drive through Arduino controller -> .NET -> MQTT -> ESP32 -> Zumo.
+6. Calibrate opponent and boundary detection against the actual ring and lighting.
+7. Test boundary overrides during manual commands and autonomous attacks.
+8. Disconnect controller, stop .NET, stop broker, remove Wi-Fi and reset ESP32.
+   Confirm the robot stops and does not restart from stale commands.
+9. Test battery operation and radio reliability while motors are loaded.
+10. Run a controlled match after the independent checks pass.
+
+10. OPEN DECISIONS
+- Exact ESP32 board and mounting arrangement.
+- Ring size, material, boundary width/colour and loss criteria.
+- Final command schema, IDs, topics, speed range and arming rules.
+- Sensor calibration and autonomous search strategy.
+- Battery/charger selection, total budget and purchasing approval.
+- Whether both robots need telemetry or mode switching.
+- Demonstration schedule and responsibility for each acceptance test.
+
+11. REFERENCE LINKS
+Zumo 2040 assembled 75:1 robot:
+https://www.pololu.com/product/5012
+Zumo 2040 expansion/UART connections:
+https://www.pololu.com/docs/0J87/6.11
+Zumo 2040 power:
+https://www.pololu.com/docs/0J87/6.8
+Zumo 2040 pinout:
+https://www.pololu.com/file/0J2005/zumo-2040-main-board-pinout.pdf
+ESP32-DevKitC V4 board and power options:
+https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32/esp32-devkitc/user_guide.html
+ESP32 Arduino serial API:
+https://docs.espressif.com/projects/arduino-esp32/en/latest/api/serial.html
+Dutch supplier for the proposed Zumo:
+https://opencircuit.nl/product/zumo-2040-robot-assembled-with-751-hp-motors
+
+Supplier prices and delivery estimates change. Check them before ordering.
