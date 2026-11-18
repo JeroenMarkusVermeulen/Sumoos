@@ -8,10 +8,7 @@
 <section class="content-section about-content">
     <div class="text-block">
         <h2>Who are we?</h2>
-        <p>We are four final-year software development students from the Netherlands (Jeroen & Ramazan) and Denmark (Vlad & Oliver). We teamed up via GitHub and Discord to build an advanced sumobot system for our graduation project.</p>
-        
-        <h2>Team Responsibilities</h2>
-        <ul class="feature-list">
+        <p>We are 4 final-year IT students from the Netherlands (Jeroen & Ramazan) and Denmark (Vlad & Oliver). As part of our Bilingual Education (TTO) program, we partnered internationally to build an advanced sumobot system for our graduation project. We collaborate closely across borders using GitHub and Teams.</p>
             <li><strong>Oliver:</strong> Autonomous robot programming & combat logic.</li>
             <li><strong>Vlad:</strong> Arduino controller hardware & logic.</li>
             <li><strong>Jeroen:</strong> .NET application & MQTT communication.</li>
