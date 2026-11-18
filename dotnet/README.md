@@ -1,18 +1,51 @@
 # Sumoos .NET controller gateway
 
-Basic console application for Jeroen's communication component:
+Windows desktop dashboard and optional console gateway for Jeroen's communication component:
 Arduino handheld controller -> USB serial -> this app -> Docker MQTT -> ESP32 -> Zumo.
 The business website remains separate in ../website. This app runs on the laptop, not Vercel.
 
 ## Layout
 
 - src/Sumoos.Core: motor input validation, arming and timeout rules (no hardware dependencies).
-- src/Sumoos.Controller: console entry point, Configuration, Input and Communication adapters.
+- src/Sumoos.Dashboard: WPF interface, styles and display view model.
+- src/Sumoos.Controller: optional console entry point, Configuration, Input, Communication and Services adapters.
 - tests/Sumoos.Checks: executable safety checks; failures return a nonzero exit code.
 - docs/protocol.md: interface contract for Vlad and Oliver.
 - Sumoos.sln: open in Visual Studio.
 
-## Start without hardware
+## Open the dashboard (Windows)
+
+From this dotnet folder:
+
+    dotnet run --project src/Sumoos.Dashboard
+
+Or open Sumoos.sln in Visual Studio, set Sumoos.Dashboard as the startup project and press F5.
+VS Code can launch it from its PowerShell terminal with the same command.
+
+Simulation is selected by default. Click Start session, then Arm simulation.
+Hold a directional button to drive; release it to return to neutral.
+Pause input deliberately to verify the 250 ms timeout. Resume input and explicitly
+re-arm afterward. Switching away from the window requests a stop.
+
+The dashboard provides:
+- Broker/Arduino connection state, arming reason and input age.
+- Signed outgoing motor percentages and the configured speed limit.
+- Last controller line, latest JSON payload, frame/write count and error count.
+- Timestamped event log (latest 500 entries), clear and text export.
+- Broker host/port, USB port discovery, robot ID, credentials and speed configuration.
+- Start/disconnect and a prominent stop button.
+
+For live operation, disconnect first, deselect Simulation, set the Arduino port and broker
+settings, then start. The on-screen pad is disabled in live mode: only the physical
+Arduino controller can arm and drive. Empty credential fields use the existing environment
+variables. Passwords are not saved or included in logs. Settings apply to the current
+session; edit appsettings.json for persistent defaults.
+
+Live hardware still requires compatible Arduino/ESP32 firmware and a robot-side watchdog.
+These indicators are gateway state and outgoing intent, not robot telemetry.
+Do not run the dashboard and console gateway simultaneously for the same robot.
+
+## Optional console: start without hardware
 
 Install the .NET 8 SDK (the SDK available for verification on this machine).
 This baseline targets net8.0; upgrade to a supported .NET LTS before production use.
@@ -57,7 +90,7 @@ Simulation output reports intended motor commands, not measured robot motion.
 
 Port/broker failures retry every two seconds and disarm the controller.
 The console reports local state and broker connectivity; it does not claim that a robot
-received a command. No robot telemetry, mode switching, GUI, database or match scoring yet.
+received a command. The console remains available for terminal use. No robot telemetry, mode switching, database or match scoring yet.
 
 ## Hardware acceptance
 
@@ -72,6 +105,9 @@ Never expose the plaintext MQTT port to the public internet; this baseline is fo
 Run the checks above. Real Arduino/ESP32/Zumo end-to-end testing needs the hardware.
 The checks exercise state logic plus real TCP MQTT CONNECT/PUBLISH against a local
 fake broker, including topic, sequence, session, expiry and non-retained QoS 0 flags.
+The dashboard-session checks cover arming, speed scaling, stop precedence, heartbeat
+loss, explicit re-arming and cancellation. The CI smoke test loads and lays out the
+actual WPF window and verifies clean shutdown, catching runtime XAML binding failures.
 They do not measure radio delivery or motor stopping distance.
 Communication/RobotPublisher is a deliberately narrow MQTT 3.1.1 publisher, not a
 general MQTT library. It supports broker username/password, clean sessions and QoS 0.

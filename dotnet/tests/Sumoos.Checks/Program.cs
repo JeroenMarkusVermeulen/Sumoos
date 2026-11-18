@@ -76,3 +76,43 @@ using (var publisher = new RobotPublisher(new AppOptions { BrokerHost="127.0.0.1
 }
 await broker;
 Console.WriteLine($"Total {checks} checks passed.");
+
+// Dashboard session is testable independently of WPF or physical hardware.
+using (var cancellation = new CancellationTokenSource())
+{
+    var gateway = new Sumoos.Controller.Services.GatewaySession();
+    var run = gateway.RunAsync(new AppOptions { MaxSpeedPercent = 30 }, true, null, null, cancellation.Token);
+    async Task WaitUntil(Func<bool> condition, Action? feed = null)
+    {
+        var until = Environment.TickCount64 + 3000;
+        while (!condition())
+        {
+            if (Environment.TickCount64 > until) throw new Exception("Dashboard session test timed out.");
+            feed?.Invoke(); await Task.Delay(20);
+        }
+    }
+    await WaitUntil(() => gateway.Snapshot.Running);
+    Check(!gateway.Snapshot.Armed, "dashboard starts disarmed");
+    gateway.FeedSimulation(0, 0); gateway.ArmSimulation();
+    await WaitUntil(() => gateway.Snapshot.Armed, () => gateway.FeedSimulation(0, 0));
+    gateway.FeedSimulation(50, -50);
+    await WaitUntil(() => gateway.Snapshot.Left == 15, () => gateway.FeedSimulation(50, -50));
+    Check(gateway.Snapshot.Right == -15, "dashboard speed limit and signed output");
+    Check(gateway.Snapshot.Simulation && !gateway.Snapshot.BrokerConnected, "simulation never claims broker connection");
+    gateway.RequestStop();
+    await WaitUntil(() => !gateway.Snapshot.Armed);
+    Check(gateway.Snapshot.Left == 0 && gateway.Snapshot.Right == 0, "dashboard stop overrides drive");
+    gateway.FeedSimulation(0, 0); gateway.ArmSimulation();
+    await WaitUntil(() => gateway.Snapshot.Armed, () => gateway.FeedSimulation(0, 0));
+    gateway.FeedSimulation(50, 50);
+    await WaitUntil(() => gateway.Snapshot.Left == 15, () => gateway.FeedSimulation(50, 50));
+    await WaitUntil(() => !gateway.Snapshot.Armed); // stop all UI heartbeats
+    Check(gateway.Snapshot.Left == 0 && gateway.Snapshot.Reason == "controller timeout", "frozen UI cannot sustain movement");
+    gateway.FeedSimulation(50, 50);
+    await Task.Delay(70);
+    Check(!gateway.Snapshot.Armed, "new UI input cannot auto rearm");
+    cancellation.Cancel(); await run;
+    Check(!gateway.Snapshot.Running && gateway.Snapshot.Left == 0, "dashboard cancellation stops session");
+    Check(!gateway.Logs.IsEmpty, "dashboard emits diagnostic events");
+}
+Console.WriteLine($"Total {checks} checks passed including dashboard session.");

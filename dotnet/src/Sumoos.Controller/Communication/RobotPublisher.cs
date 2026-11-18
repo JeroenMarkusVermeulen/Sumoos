@@ -6,11 +6,12 @@ namespace Sumoos.Controller.Communication;
 
 // Narrow MQTT 3.1.1 client: clean-session CONNECT and non-retained QoS 0 PUBLISH only.
 // The 20 Hz publish loop satisfies the keep-alive; no subscriptions or offline queue.
-public sealed class RobotPublisher(AppOptions settings) : IDisposable
+public sealed class RobotPublisher(AppOptions settings, string? username = null, string? password = null) : IDisposable
 {
     private TcpClient? client;
     private readonly string session = Guid.NewGuid().ToString("N");
     private long sequence;
+    public string LastPayload { get; private set; } = "";
     public bool Connected => client?.Connected == true;
     public async Task ConnectAsync(CancellationToken token)
     {
@@ -21,16 +22,16 @@ public sealed class RobotPublisher(AppOptions settings) : IDisposable
             await client.ConnectAsync(settings.BrokerHost, settings.BrokerPort, token);
             using var body = new MemoryStream();
             Text(body, "MQTT"); body.WriteByte(4);
-            var user = Environment.GetEnvironmentVariable("SUMOOS_MQTT_USERNAME");
-            var password = Environment.GetEnvironmentVariable("SUMOOS_MQTT_PASSWORD");
+            var user = username ?? Environment.GetEnvironmentVariable("SUMOOS_MQTT_USERNAME");
+            var secret = password ?? Environment.GetEnvironmentVariable("SUMOOS_MQTT_PASSWORD");
             var flags = 2; // clean session
             if (!string.IsNullOrEmpty(user)) flags |= 128;
-            if (password is not null && !string.IsNullOrEmpty(user)) flags |= 64;
+            if (secret is not null && !string.IsNullOrEmpty(user)) flags |= 64;
             body.WriteByte((byte)flags);
             body.WriteByte(0); body.WriteByte(10); // 10 second keep-alive
             Text(body, $"sumoos-{session}");
             if ((flags & 128) != 0) Text(body, user!);
-            if ((flags & 64) != 0) Text(body, password!);
+            if ((flags & 64) != 0) Text(body, secret!);
             await PacketAsync(0x10, body.ToArray(), token);
             var reply = new byte[4];
             await client.GetStream().ReadExactlyAsync(reply, token);
@@ -46,6 +47,7 @@ public sealed class RobotPublisher(AppOptions settings) : IDisposable
             sentAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), ttlMs = 250,
             command = armed ? "drive" : "stop", left, right
         });
+        LastPayload = payload;
         using var body = new MemoryStream();
         Text(body, $"sumoos/{settings.RobotId}/command");
         body.Write(Encoding.UTF8.GetBytes(payload));

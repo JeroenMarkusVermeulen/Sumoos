@@ -6,6 +6,7 @@ public sealed class ArduinoInput(string name, int baud) : IDisposable
 {
     private readonly SerialPort port = new(name, baud);
     private readonly StringBuilder pending = new();
+    public static string[] GetPortNames() => SerialPort.GetPortNames();
     public void Open() { port.Open(); port.DiscardInBuffer(); }
     public void Clear() { pending.Clear(); port.DiscardInBuffer(); }
     public IReadOnlyList<string> Read()
