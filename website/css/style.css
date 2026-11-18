@@ -1,4 +1,8 @@
-/* Basis instellingen voor de hele website */
+/* 
+   Project: Sumoos Website
+   Theme: Dark mode (Black & Blue)
+*/
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -7,24 +11,25 @@
 }
 
 body {
-    background-color: #f4f7f6;
-    color: #333;
+    background-color: #050505;
+    color: #e0e0e0;
     line-height: 1.6;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 100vh; /* Zorgt dat de footer altijd onderaan staat */
 }
 
-/* Navigatiebalk */
+/* Header & Navigatie */
 header {
-    background-color: #1a1a1a;
+    background-color: #000000;
     padding: 1.5rem 0;
+    border-bottom: 2px solid #0055ff;
 }
 
 nav {
     display: flex;
     justify-content: center;
-    gap: 30px;
+    gap: 40px;
 }
 
 nav a {
@@ -36,96 +41,170 @@ nav a {
 }
 
 nav a:hover {
-    color: #00ffcc;
+    color: #0088ff;
 }
 
-/* Hoofdinhoud */
 main {
     flex: 1;
-    padding: 40px 20px;
-    max-width: 1100px;
-    margin: 0 auto;
     width: 100%;
 }
 
-/* Bovenste blok (Hero) */
+.content-section {
+    padding: 60px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bg-darker {
+    background-color: #020202;
+    max-width: 100%;
+    border-top: 1px solid #111;
+    border-bottom: 1px solid #111;
+}
+
+.section-title {
+    text-align: center;
+    color: #ffffff;
+    font-size: 2.2rem;
+    margin-bottom: 40px;
+}
+
+/* Hero Section (Bovenste blok) */
 .hero-section {
     text-align: center;
-    padding: 80px 20px;
-    background: #2c3e50;
-    color: white;
-    border-radius: 12px;
-    margin-bottom: 40px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    padding: 100px 20px;
+    background: linear-gradient(180deg, #0a0f1a 0%, #050505 100%);
+    border-bottom: 1px solid #002266;
 }
 
-.hero-section h1 {
-    font-size: 3rem;
-    margin-bottom: 15px;
+.hero-content h1 {
+    font-size: 3.5rem;
+    color: #0088ff;
+    margin-bottom: 20px;
 }
 
-.hero-section p {
-    font-size: 1.2rem;
-    margin-bottom: 30px;
-    color: #d1d8e0;
+.hero-content p {
+    font-size: 1.3rem;
+    color: #a0aab5;
+    max-width: 700px;
+    margin: 0 auto 30px auto;
 }
 
-/* Knoppen */
+/* Knoppen styling */
 .btn {
     display: inline-block;
-    padding: 12px 25px;
-    background: #00ffcc;
-    color: #1a1a1a;
+    padding: 12px 30px;
+    background: #0055ff;
+    color: #ffffff;
     text-decoration: none;
     font-weight: bold;
-    border-radius: 6px;
+    border-radius: 4px;
     margin: 0 10px;
-    transition: background 0.3s, transform 0.2s;
+    border: 2px solid #0055ff;
+    transition: all 0.3s ease;
 }
 
 .btn:hover {
-    background: #00ccaa;
-    transform: translateY(-2px);
+    background: #0033cc;
+    border-color: #0033cc;
 }
 
 .btn-secondary {
     background: transparent;
-    border: 2px solid #00ffcc;
-    color: #00ffcc;
+    color: #0088ff;
+    border: 2px solid #0088ff;
 }
 
 .btn-secondary:hover {
-    background: #00ffcc;
-    color: #1a1a1a;
+    background: #0088ff;
+    color: #ffffff;
 }
 
-/* Informatie blokken onderaan homepage */
-.features {
+/* Flexbox Grid voor de info blokken */
+.grid-container {
     display: flex;
     gap: 30px;
     justify-content: center;
     flex-wrap: wrap;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-.feature-box {
-    background: white;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+.grid-container.half .card {
+    flex: 1;
+    min-width: 400px;
+}
+
+.grid-container.triple .card {
     flex: 1;
     min-width: 300px;
-    text-align: center;
 }
 
-.feature-box h2 {
-    color: #2c3e50;
+.card {
+    background: #0a0a0a;
+    padding: 40px 30px;
+    border-radius: 6px;
+    border: 1px solid #1a1a1a;
+    border-top: 3px solid #0055ff;
+}
+
+.card h3, .card h4 {
+    color: #ffffff;
     margin-bottom: 15px;
+    font-size: 1.4rem;
+}
+
+.card p {
+    color: #999999;
+}
+
+/* About Us pagina extra's */
+.page-header {
+    text-align: center;
+    padding: 80px 20px 40px;
+}
+
+.page-header h1 {
+    color: #0088ff;
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.text-block {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.text-block h2 {
+    color: #ffffff;
+    margin: 30px 0 15px 0;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+.feature-list {
+    list-style-type: none;
+}
+
+.feature-list li {
+    background: #0a0a0a;
+    margin-bottom: 15px;
+    padding: 20px;
+    border-left: 4px solid #0055ff;
+    border-radius: 4px;
+}
+
+.feature-list li strong {
+    color: #0088ff;
+    display: block;
+    margin-bottom: 5px;
 }
 
 /* Footer */
 footer {
     text-align: center;
-    padding: 20px;
-    background: #1a1a1a;
-    color: #7f8c8d;
+    padding: 30px;
+    background: #000000;
+    color: #555555;
+    border-top: 1px solid #111;
 }
