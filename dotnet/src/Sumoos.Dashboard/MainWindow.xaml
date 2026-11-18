@@ -37,7 +37,7 @@
        <TextBlock x:Name="PortsText" Text="Refresh to discover ports" TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,-5,0,12"/>
        <TextBlock Text="BAUD RATE" Style="{StaticResource Caption}"/><TextBox x:Name="BaudBox" Text="115200" AutomationProperties.Name="Baud rate"/>
        <TextBlock Text="MQTT USERNAME" Style="{StaticResource Caption}"/><TextBox x:Name="UserBox" AutomationProperties.Name="MQTT username"/>
-       <TextBlock Text="MQTT PASSWORD" Style="{StaticResource Caption}"/><PasswordBox x:Name="PasswordInput" AutomationProperties.Name="MQTT password"/>
+       <TextBlock Text="MQTT PASSWORD" Style="{StaticResource Caption}"/><PasswordBox x:Name="PasswordInput" AutomationProperties.Name="MQTT password"/> 
        <TextBlock Text="SPEED LIMIT" Style="{StaticResource Caption}"/>
        <DockPanel Margin="0,0,0,14"><TextBlock DockPanel.Dock="Right" Text="{Binding ElementName=SpeedSlider, Path=Value, StringFormat={}{0:0}%}" Width="38"/><Slider x:Name="SpeedSlider" Minimum="5" Maximum="100" Value="30" TickFrequency="5" IsSnapToTickEnabled="True" AutomationProperties.Name="Speed limit"/></DockPanel>
       </StackPanel>
