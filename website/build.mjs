@@ -27,4 +27,5 @@ for (const page of ['index', 'about', 'contact']) {
   await writeFile(path.join(out, page + '.html'), await render(page + '.php'));
 }
 await cp(path.join(root, 'css'), path.join(out, 'css'), { recursive: true });
+for (const folder of ['images', 'js']) await cp(path.join(root, folder), path.join(out, folder), { recursive: true });
 console.log('Built Home, About and Contact pages into dist/.');
