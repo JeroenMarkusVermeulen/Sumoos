@@ -1,30 +1,3 @@
-<?php 
-// Variabele om een succes- of foutmelding te tonen
-$melding = "";
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // 1. Data veilig ophalen (voorkomt XSS injecties)
-    $name = htmlspecialchars(trim($_POST['name']));
-    $email = htmlspecialchars(trim($_POST['email']));
-    $subject = htmlspecialchars(trim($_POST['subject']));
-    $message = htmlspecialchars(trim($_POST['message']));
-
-    $to = "sumbots2026@gmail.com";
-    $headers = "From: " . $email . "\r\n" .
-               "Reply-To: " . $email . "\r\n" .
-               "Content-Type: text/plain; charset=UTF-8\r\n" .
-               "X-Mailer: PHP/" . phpversion();
-
-
-    if(@mail($to, $subject, $message, $headers)) {
-        $melding = "<div class='alert success'>Bericht succesvol verzonden! Bedankt, $name.</div>";
-    } else {
-        // Fallback voor je docent/demo op localhost
-        $melding = "<div class='alert success'>Thank you, $name! Your message has been received!.</div>";
-    }
-}
-?>
-
 <?php include 'inc/header.php'; ?>
 
 <section class="page-header">
@@ -36,10 +9,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="text-block">
         
         <!-- Toon de melding als het formulier is ingevuld -->
-        <?php if(!empty($melding)) { echo $melding; } ?>
+        <p>Submitting opens a draft in your email app. Review it and press Send there. No message is sent by this website.</p><p>You can also email <a href="mailto:sumbots2026@gmail.com">sumbots2026@gmail.com</a>.</p>
 
         <!-- actie is leeg ("") zodat hij naar deze zelfde pagina post -->
-        <form class="contact-form" action="" method="POST">
+        <form class="contact-form" action="mailto:sumbots2026@gmail.com" method="GET" id="contact-form">
             <div class="form-group">
                 <label for="name">Name</label>
                 <input type="text" id="name" name="name" placeholder="Your name" required>
@@ -56,9 +29,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <label for="message">Message</label>
                 <textarea id="message" name="message" rows="5" placeholder="Write your message here..." required></textarea>
             </div>
-            <button type="submit" class="btn">Send Message</button>
+            <button type="submit" class="btn">Open Email Draft</button>
         </form>
     </div>
 </section>
 
+<script src="/js/contact.js" defer></script>
 <?php include 'inc/footer.php'; ?>
