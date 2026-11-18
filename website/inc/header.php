@@ -14,4 +14,4 @@
             <a href="contact.php">Contact</a>
         </nav>
     </header>
-    <main></main>
+    <main>
