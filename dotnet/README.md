@@ -37,9 +37,11 @@ The dashboard provides:
 
 For live operation, disconnect first, deselect Simulation, set the Arduino port and broker
 settings, then start. The on-screen pad is disabled in live mode: only the physical
-Arduino controller can arm and drive. Empty credential fields use the existing environment
-variables. Passwords are not saved or included in logs. Settings apply to the current
-session; edit appsettings.json for persistent defaults.
+Arduino controller can arm and drive. The dashboard pre-fills credentials from `MQTT_USERNAME`
+and `MQTT_PASSWORD` in a `.env` file in the repository or a parent directory; if a key is
+missing, its corresponding `SUMOOS_MQTT_USERNAME` or `SUMOOS_MQTT_PASSWORD` environment
+variable is used instead. Passwords are not saved or included in logs. Settings apply to the
+current session; edit appsettings.json for persistent defaults.
 
 Live hardware still requires compatible Arduino/ESP32 firmware and a robot-side watchdog.
 These indicators are gateway state and outgoing intent, not robot telemetry.

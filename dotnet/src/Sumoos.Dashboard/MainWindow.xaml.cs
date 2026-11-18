@@ -44,9 +44,51 @@ public partial class MainWindow : Window
             }
         }
         catch (Exception ex) { AddLog("WARN", $"Settings could not be loaded ({ex.GetType().Name}); using defaults."); }
+        LoadCredentials();
         AddLog("INFO", "Ready. Start simulation or configure the Arduino and broker.");
         timer.Tick += (_, _) => Refresh();
         timer.Start();
+    }
+    private void LoadCredentials()
+    {
+        try
+        {
+            var credentials = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var start in new[] { AppContext.BaseDirectory, Environment.CurrentDirectory })
+            {
+                for (var directory = new DirectoryInfo(start); directory is not null; directory = directory.Parent)
+                {
+                    var path = Path.Combine(directory.FullName, ".env");
+                    if (!File.Exists(path)) continue;
+                    foreach (var line in File.ReadLines(path))
+                    {
+                        var entry = line.Trim();
+                        if (entry.Length == 0 || entry.StartsWith('#')) continue;
+                        if (entry.StartsWith("export ", StringComparison.Ordinal)) entry = entry[7..].TrimStart();
+                        var separator = entry.IndexOf('=');
+                        if (separator <= 0) continue;
+                        var key = entry[..separator].Trim();
+                        if (key is not ("MQTT_USERNAME" or "MQTT_PASSWORD")) continue;
+                        var value = entry[(separator + 1)..].Trim();
+                        if (value.Length >= 2 && (value[0] == '"' && value[^1] == '"' || value[0] == '\'' && value[^1] == '\''))
+                            value = value[1..^1];
+                        else
+                        {
+                            var comment = value.IndexOf(" #", StringComparison.Ordinal);
+                            if (comment >= 0) value = value[..comment].TrimEnd();
+                        }
+                        credentials[key] = value;
+                    }
+                    break;
+                }
+            }
+
+            UserBox.Text = credentials.TryGetValue("MQTT_USERNAME", out var username)
+                ? username : Environment.GetEnvironmentVariable("SUMOOS_MQTT_USERNAME") ?? "";
+            PasswordInput.Password = credentials.TryGetValue("MQTT_PASSWORD", out var password)
+                ? password : Environment.GetEnvironmentVariable("SUMOOS_MQTT_PASSWORD") ?? "";
+        }
+        catch (Exception ex) { AddLog("WARN", $"MQTT credentials could not be loaded ({ex.GetType().Name})."); }
     }
     private void AddLog(string level, string message) => model.Add(new(DateTimeOffset.Now, level, message));
     private void Refresh()
