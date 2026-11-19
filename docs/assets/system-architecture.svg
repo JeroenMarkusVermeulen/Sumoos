@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+<title id="title">Sumoos system architecture</title>
+<desc id="desc">Arduino input goes over USB to the .NET gateway on a laptop, then by MQTT to a Docker Mosquitto broker on the same laptop. A local Wi-Fi link connects the broker to an ESP32, which sends UART commands to the manual Zumo. The autonomous Zumo uses onboard sensors, decisions and motors locally. Both robots require local boundary protection and a command-loss stop where applicable. The website is separate.</desc>
+<defs>
+ <marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="#6ee7ce"/></marker>
+ <marker id="p" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="#b6a1ff"/></marker>
+</defs>
+<rect width="1200" height="700" rx="22" fill="#0e1523"/>
+<g font-family="Segoe UI, Arial, sans-serif">
+ <text x="40" y="51" font-size="28" font-weight="700" fill="#edf4ff">One project. Two control paths.</text>
+ <text x="40" y="82" font-size="17" fill="#9db0cc">Local manual-control chain and independent autonomous decisions</text>
+ <rect x="410" y="112" width="750" height="208" rx="16" fill="#141f30" stroke="#34455f"/>
+ <text x="434" y="139" font-size="13" letter-spacing="1.5" fill="#9db0cc">LAPTOP</text>
+ <rect x="40" y="160" width="280" height="120" rx="12" fill="#192738" stroke="#45637b"/>
+ <text x="62" y="192" font-size="13" letter-spacing="1" fill="#9db0cc">PLAYER INPUT</text>
+ <text x="62" y="222" font-size="23" font-weight="600" fill="#edf4ff">Arduino controller</text>
+ <text x="62" y="251" font-size="16" fill="#b9c8df">Joystick + buttons</text>
+ <rect x="448" y="160" width="285" height="120" rx="12" fill="#173a39" stroke="#3c7e70"/>
+ <text x="470" y="192" font-size="13" letter-spacing="1" fill="#6ee7ce">WINDOWS / .NET</text>
+ <text x="470" y="222" font-size="23" font-weight="600" fill="#edf4ff">Dashboard + gateway</text>
+ <text x="470" y="251" font-size="16" fill="#b9d9d3">Validate, limit, publish, debug</text>
+ <rect x="836" y="160" width="285" height="120" rx="12" fill="#192738" stroke="#45637b"/>
+ <text x="858" y="192" font-size="13" letter-spacing="1" fill="#9db0cc">DOCKER</text>
+ <text x="858" y="222" font-size="23" font-weight="600" fill="#edf4ff">MQTT broker</text>
+ <text x="858" y="251" font-size="16" fill="#b9c8df">Mosquitto / port 1883</text>
+ <path d="M320 220H440" stroke="#6ee7ce" stroke-width="2.5" marker-end="url(#a)" fill="none"/>
+ <text x="345" y="203" font-size="14" fill="#6ee7ce">USB serial</text>
+ <path d="M733 220H828" stroke="#6ee7ce" stroke-width="2.5" marker-end="url(#a)" fill="none"/>
+ <text x="758" y="203" font-size="14" fill="#6ee7ce">MQTT</text>
+
+ <rect x="40" y="384" width="520" height="205" rx="16" fill="#16272c" stroke="#3e6b67"/>
+ <text x="62" y="417" font-size="17" font-weight="600" fill="#6ee7ce">BOT 1 / AUTONOMOUS</text>
+ <rect x="62" y="442" width="135" height="72" rx="9" fill="#20383b"/>
+ <text x="129" y="472" text-anchor="middle" font-size="17" fill="#edf4ff">Sensors</text>
+ <text x="129" y="495" text-anchor="middle" font-size="13" fill="#adcbc8">Opponent + edge</text>
+ <rect x="221" y="442" width="151" height="72" rx="9" fill="#20383b"/>
+ <text x="296" y="472" text-anchor="middle" font-size="17" fill="#edf4ff">Local decisions</text>
+ <text x="296" y="495" text-anchor="middle" font-size="13" fill="#adcbc8">Search / approach</text>
+ <rect x="396" y="442" width="135" height="72" rx="9" fill="#20383b"/>
+ <text x="463" y="472" text-anchor="middle" font-size="17" fill="#edf4ff">Motors</text>
+ <text x="463" y="495" text-anchor="middle" font-size="13" fill="#adcbc8">Drive + push</text>
+ <path d="M197 478H214M372 478H389" stroke="#6ee7ce" stroke-width="1.5" marker-end="url(#a)"/>
+ <text x="62" y="548" font-size="15" fill="#b9c8df">Onboard boundary protection overrides motion.</text>
+ <text x="62" y="573" font-size="13" fill="#91a5bf">Firmware and sensor calibration still to implement/test.</text>
+
+ <rect x="600" y="384" width="560" height="205" rx="16" fill="#252139" stroke="#5b4e7b"/>
+ <text x="624" y="417" font-size="17" font-weight="600" fill="#c9b7ff">BOT 2 / MANUAL</text>
+ <rect x="624" y="442" width="200" height="88" rx="9" fill="#342c4c"/>
+ <text x="644" y="477" font-size="23" font-weight="600" fill="#edf4ff">ESP32</text>
+ <text x="644" y="507" font-size="15" fill="#d1c8e4">Wi-Fi bridge</text>
+ <rect x="912" y="442" width="224" height="88" rx="9" fill="#342c4c"/>
+ <text x="932" y="477" font-size="23" font-weight="600" fill="#edf4ff">Zumo 2040</text>
+ <text x="932" y="507" font-size="15" fill="#d1c8e4">Motor control + safety</text>
+ <path d="M824 486H904" stroke="#b6a1ff" stroke-width="2" marker-end="url(#p)" fill="none"/>
+ <text x="844" y="469" font-size="14" fill="#c9b7ff">UART</text>
+ <text x="624" y="555" font-size="15" fill="#d1c8e4">Local command-loss watchdog + boundary override.</text>
+ <text x="624" y="577" font-size="13" fill="#a99cbd">ESP32/Zumo firmware still to implement/test.</text>
+
+ <path d="M978 280V350H582V486H616" stroke="#6ee7ce" stroke-width="2.5" fill="none" marker-end="url(#a)"/>
+ <text x="670" y="340" font-size="15" fill="#6ee7ce">Local network / Wi-Fi</text>
+ <line x1="40" y1="616" x2="1160" y2="616" stroke="#2e3a51"/>
+ <text x="40" y="647" font-size="16" fill="#b9c8df">Website: informational pages on Vercel, separate from robot control.</text>
+ <text x="40" y="677" font-size="14" fill="#91a5bf">Architecture concept • arrows show command direction • not a wiring diagram or proof of hardware integration</text>
+</g>
+</svg>

@@ -1,0 +1,23 @@
+name: .NET controller checks
+on:
+  push:
+    paths: ['dotnet/**', '.github/workflows/dotnet.yml']
+  pull_request:
+    paths: ['dotnet/**', '.github/workflows/dotnet.yml']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: dotnet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build Sumoos.sln --configuration Release
+      - run: dotnet run --project tests/Sumoos.Checks --configuration Release --no-build
+      - name: Dashboard startup and shutdown smoke test
+        run: dotnet src/Sumoos.Dashboard/bin/Release/net8.0-windows/Sumoos.Dashboard.dll --smoke-test
