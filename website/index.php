@@ -3,7 +3,7 @@
 <section class="hero-section">
     <div class="hero-content">
         <img src="images/logo.jpg" alt="Sumoos Logo" class="hero-logo">
-        <h1>Engineering the Future of Combat Robotics</h1>
+        <h1>Developing the Future of Combat Robotics</h1>
         <p>Autonomous and manual sumobots built for competitive robot sumo.</p>
         <div class="hero-buttons">
             <a href="about.php" class="btn">Meet the Team</a>
