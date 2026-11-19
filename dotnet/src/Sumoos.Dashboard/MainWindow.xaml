@@ -111,7 +111,7 @@
           <DockPanel Margin="0,0,0,12"><TextBlock Text="{Binding CountLabel}" Foreground="{StaticResource Muted}"/><TextBlock Text="{Binding State.Sent}" Margin="12,0,22,0" Foreground="{StaticResource Accent}"/><TextBlock Text="ERRORS" Foreground="{StaticResource Muted}"/><TextBlock Text="{Binding State.Errors}" Margin="12,0,0,0" Foreground="#FF9AAE"/></DockPanel>
           <TextBlock Text="LATEST OUTGOING PAYLOAD" Style="{StaticResource Caption}"/>
           <TextBox Text="{Binding State.Payload, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas" MinHeight="100"/>
-          <TextBlock Text="MQTT writes confirm socket output only. No robot delivery or movement confirmation is available." TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="11"/>
+          <TextBlock Text="MQTT writes confirm socket output only. Robot feedback reports simulated state, never physical movement." TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="11"/>
          </StackPanel>
         </ScrollViewer>
        </TabItem>

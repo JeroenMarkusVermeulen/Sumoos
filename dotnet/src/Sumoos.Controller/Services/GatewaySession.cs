@@ -34,8 +34,7 @@ public sealed class GatewaySession
             using var json = System.Text.Json.JsonDocument.Parse(mqtt.StatusPayload);
             var r = json.RootElement;
             return mqtt.StatusAgeMs < 750 && r.GetProperty("sessionId").GetString() == mqtt.SessionId
-                && r.GetProperty("ready").GetBoolean() && r.GetProperty("simulated").GetBoolean()
-                && r.GetProperty("version").GetInt32() == 1;
+                && r.GetProperty("ready").GetBoolean();
         } catch (Exception) { return false; }
     }
     private void Log(string level, string message)
@@ -53,7 +52,7 @@ public sealed class GatewaySession
         long sent = 0, errors = 0, nextConnect = 0;
         long? lastInputAt = null;
         string lastInput = "No input yet", previousReason = "", payload = "";
-        Log("INFO", simulation ? "Simulation started. No network or hardware is used." : $"Live gateway started for {options.RobotId}.");
+        Log("INFO", brokerSimulation ? "Docker MQTT simulation started. No physical hardware is used." : simulation ? "Simulation started. No network or hardware is used." : $"Live gateway started for {options.RobotId}.");
         void PublishSnapshot(bool active = true)
         {
             var (l, r) = state.Output();
@@ -87,10 +86,10 @@ public sealed class GatewaySession
                             try { opening.Open(); serial = opening; } catch { opening.Dispose(); throw; }
                             }
                             Interlocked.Exchange(ref arm, 0);
-                            state.Stop("Connected; waiting for neutral + Arduino ARM");
+                            state.Stop(simulation ? "Broker connected; waiting for robot feedback and explicit arm" : "Connected; waiting for neutral + Arduino ARM");
                             await mqtt.SendAsync(false, 0, 0, deadline.Token);
                             payload = mqtt.LastPayload; sent++;
-                            Log("INFO", "Broker and Arduino connected. Motion remains disarmed.");
+                            Log("INFO", simulation ? "Broker connected. Waiting for simulated robot feedback; disarmed." : "Broker and Arduino connected. Motion remains disarmed.");
                         }
                         catch (Exception ex) when (!token.IsCancellationRequested)
                         {
