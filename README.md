@@ -244,3 +244,10 @@ The next integration milestones are:
 The pitch presents the original project idea. This README and the application/protocol
 guides describe the current software. The diagrams are original concept illustrations,
 not photographs or wiring diagrams. Licensing information is in [docs/LICENSE](docs/LICENSE).
+
+## Hardware-free Docker milestone
+
+See [simulation/README.md](simulation/README.md) for the separate MQTT broker, robot simulator,
+status feedback and deliberate restart tests. In the dashboard select Simulation plus
+Use Docker MQTT simulator, use localhost:1884 and the simulation credentials.
+The simulator reports virtual motor percentages, not physical motion or sensor measurements.

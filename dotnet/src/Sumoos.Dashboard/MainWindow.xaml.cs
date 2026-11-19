@@ -111,13 +111,15 @@ public partial class MainWindow : Window
             };
             options.Validate();
             var simulation = SimulationBox.IsChecked == true;
+            var networkSimulation = BrokerSimulationBox.IsChecked == true;
+            if (networkSimulation && !simulation) throw new ArgumentException("Select Simulation to use the Docker simulator.");
             session = new GatewaySession();
             cancellation = new CancellationTokenSource();
             heldLeft = heldRight = 0; PauseInput.IsChecked = false;
             session.FeedSimulation(0, 0);
             var user = string.IsNullOrEmpty(UserBox.Text) ? null : UserBox.Text;
             var password = string.IsNullOrEmpty(PasswordInput.Password) ? null : PasswordInput.Password;
-            worker = Task.Run(() => session.RunAsync(options, simulation, user, password, cancellation.Token));
+            worker = Task.Run(() => session.RunAsync(options, simulation, user, password, cancellation.Token, networkSimulation));
             SettingsPanel.IsEnabled = false; SimControls.IsEnabled = simulation;
             ConnectButton.Content = "Disconnect";
             await Task.Delay(100);

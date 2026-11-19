@@ -28,17 +28,27 @@ public sealed class GatewaySession
         Interlocked.Exchange(ref arm, 0);
         Interlocked.Exchange(ref stop, 1);
     }
+    private static bool RobotReady(RobotPublisher mqtt)
+    {
+        try {
+            using var json = System.Text.Json.JsonDocument.Parse(mqtt.StatusPayload);
+            var r = json.RootElement;
+            return mqtt.StatusAgeMs < 750 && r.GetProperty("sessionId").GetString() == mqtt.SessionId
+                && r.GetProperty("ready").GetBoolean() && r.GetProperty("simulated").GetBoolean()
+                && r.GetProperty("version").GetInt32() == 1;
+        } catch (Exception) { return false; }
+    }
     private void Log(string level, string message)
     {
         Logs.Enqueue(new(DateTimeOffset.Now, level, message));
         while (Logs.Count > 500) Logs.TryDequeue(out _);
     }
-    public async Task RunAsync(AppOptions options, bool simulation, string? username, string? password, CancellationToken token)
+    public async Task RunAsync(AppOptions options, bool simulation, string? username, string? password, CancellationToken token, bool brokerSimulation = false)
     {
         options.Validate();
         if (Interlocked.Exchange(ref running, 1) != 0) throw new InvalidOperationException("Already running.");
         var state = new ControlState();
-        using var mqtt = simulation ? null : new RobotPublisher(options, username, password);
+        using var mqtt = simulation && !brokerSimulation ? null : new RobotPublisher(options, username, password, brokerSimulation);
         ArduinoInput? serial = null;
         long sent = 0, errors = 0, nextConnect = 0;
         long? lastInputAt = null;
@@ -49,7 +59,7 @@ public sealed class GatewaySession
             var (l, r) = state.Output();
             Volatile.Write(ref snapshot, new(active, simulation, mqtt?.Connected == true, serial is not null,
                 state.Armed, state.Reason, l * options.MaxSpeedPercent / 100, r * options.MaxSpeedPercent / 100,
-                lastInput, lastInputAt is { } at ? Environment.TickCount64 - at : null, sent, errors, payload));
+                lastInput, lastInputAt is { } at ? Environment.TickCount64 - at : null, sent, errors, payload) { NetworkSimulation = brokerSimulation, RobotStatus = mqtt is not null && mqtt.StatusAgeMs < 750 ? mqtt.StatusPayload : "No fresh robot feedback" });
             if (previousReason != state.Reason) { Log(state.Armed ? "INFO" : "STATE", state.Reason); previousReason = state.Reason; }
         }
         try
@@ -60,7 +70,7 @@ public sealed class GatewaySession
                 state.Tick(now);
                 var stopRequested = Interlocked.Exchange(ref stop, 0) != 0;
                 if (stopRequested) { state.Stop("Dashboard stop"); Interlocked.Exchange(ref arm, 0); serial?.Clear(); }
-                if (!simulation && (mqtt is { Connected: false } || serial is null))
+                if (mqtt is not null && (!mqtt.Connected || (!simulation && serial is null)))
                 {
                     state.Stop("Disconnected; re-arm required");
                     if (now >= nextConnect)
@@ -71,9 +81,12 @@ public sealed class GatewaySession
                             using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
                             deadline.CancelAfter(2000);
                             if (!mqtt!.Connected) await mqtt.ConnectAsync(deadline.Token);
+                            if (!simulation) {
                             serial?.Dispose(); serial = null;
                             var opening = new ArduinoInput(options.SerialPort, options.BaudRate);
                             try { opening.Open(); serial = opening; } catch { opening.Dispose(); throw; }
+                            }
+                            Interlocked.Exchange(ref arm, 0);
                             state.Stop("Connected; waiting for neutral + Arduino ARM");
                             await mqtt.SendAsync(false, 0, 0, deadline.Token);
                             payload = mqtt.LastPayload; sent++;
@@ -93,6 +106,10 @@ public sealed class GatewaySession
                 try
                 {
                     now = Environment.TickCount64;
+                    if (brokerSimulation && (mqtt!.StatusAgeMs >= 750 || !RobotReady(mqtt))) {
+                        state.Stop("Robot feedback lost or reset; re-arm required");
+                        Interlocked.Exchange(ref arm, 0);
+                    }
                     if (simulation)
                     {
                         (int Left, int Right, long At) intent;
@@ -105,7 +122,7 @@ public sealed class GatewaySession
                         }
                         if (Interlocked.Exchange(ref arm, 0) != 0 && !stopRequested)
                         {
-                            if (!state.Apply("ARM", now)) Log("WARN", "Arm rejected: provide fresh neutral input first.");
+                            if ((brokerSimulation && !RobotReady(mqtt!)) || !state.Apply("ARM", now)) Log("WARN", "Arm rejected: provide fresh neutral input first.");
                         }
                     }
                     else if (serial is not null && !stopRequested)

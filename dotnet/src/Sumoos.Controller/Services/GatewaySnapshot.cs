@@ -5,6 +5,8 @@ public sealed record GatewaySnapshot(
     bool Armed, string Reason, int Left, int Right, string LastInput,
     long? InputAgeMs, long Sent, long Errors, string Payload)
 {
+    public bool NetworkSimulation { get; init; }
+    public string RobotStatus { get; init; } = "No robot feedback";
     public static GatewaySnapshot Idle { get; } = new(false, true, false, false, false,
         "Ready to start", 0, 0, "No input yet", null, 0, 0, "");
 }

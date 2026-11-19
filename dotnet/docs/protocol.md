@@ -52,3 +52,12 @@ and give ring boundary detection priority over remote driving.
 Wi-Fi/MQTT disconnect and expired input must stop forwarding motion and send STOP.
 A killed laptop process cannot guarantee delivery of STOP; the local watchdog is essential.
 Autonomous decisions remain on the Zumo; this baseline controls the manual bot only.
+
+## Optional Docker simulator feedback
+
+The [simulator contract](../../simulation/README.md#protocol) defines non-retained QoS0
+sumoos/{robotId}/status frames. The gateway requires fresh status for its current session
+and ready=true before arming in Docker simulation. A stop handshake establishes/re-establishes
+the receiver session. Feedback loss or ready=false disarms and requires explicit re-arming.
+This is simulated feedback only; hardware firmware must implement and test an equivalent
+contract before any corresponding hardware status indication is enabled.

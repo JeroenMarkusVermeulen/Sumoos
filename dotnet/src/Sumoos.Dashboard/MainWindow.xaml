@@ -27,6 +27,7 @@
       <TextBlock Text="Start safely. Connect deliberately." Style="{StaticResource Caption}" Margin="0,0,0,18"/>
       <StackPanel x:Name="SettingsPanel">
        <CheckBox x:Name="SimulationBox" IsChecked="True" Content="Simulation • no hardware" AutomationProperties.Name="Simulation mode"/>
+       <CheckBox x:Name="BrokerSimulationBox" Content="Use Docker MQTT simulator" FontSize="11"/>
        <TextBlock Text="BROKER HOST" Style="{StaticResource Caption}"/><TextBox x:Name="HostBox" Text="localhost" AutomationProperties.Name="Broker host"/>
        <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
         <StackPanel><TextBlock Text="MQTT PORT" Style="{StaticResource Caption}"/><TextBox x:Name="PortBox" Text="1883" AutomationProperties.Name="MQTT port"/></StackPanel>
@@ -43,7 +44,7 @@
       </StackPanel>
       <Button x:Name="ConnectButton" Content="Start session" Background="#226D65" Click="ConnectClicked" Margin="0,0,0,8"/>
       <TextBlock Text="Settings apply to the next session. Passwords stay in memory; empty fields use environment credentials." TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,8,0,12"/>
-      <Border Background="#101724" CornerRadius="8" Padding="12"><TextBlock Text="Robot telemetry is not connected. Motor values show outgoing intent, not measured movement." TextWrapping="Wrap" Foreground="#C9B9F5" FontSize="11"/></Border>
+      <Border Background="#101724" CornerRadius="8" Padding="12"><TextBlock Text="Docker simulation provides robot feedback. Hardware telemetry is not connected. Motor values show outgoing intent." TextWrapping="Wrap" Foreground="#C9B9F5" FontSize="11"/></Border>
      </StackPanel>
     </ScrollViewer>
    </Border>
@@ -104,6 +105,7 @@
        <TabItem Header="  Input and packet  ">
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14">
          <StackPanel>
+          <TextBlock Text="ROBOT FEEDBACK (SIMULATED)" Style="{StaticResource Caption}"/><TextBox Text="{Binding State.RobotStatus, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
           <TextBlock Text="LAST CONTROLLER LINE" Style="{StaticResource Caption}"/>
           <TextBox Text="{Binding State.LastInput, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas"/>
           <DockPanel Margin="0,0,0,12"><TextBlock Text="{Binding CountLabel}" Foreground="{StaticResource Muted}"/><TextBlock Text="{Binding State.Sent}" Margin="12,0,22,0" Foreground="{StaticResource Accent}"/><TextBlock Text="ERRORS" Foreground="{StaticResource Muted}"/><TextBlock Text="{Binding State.Errors}" Margin="12,0,0,0" Foreground="#FF9AAE"/></DockPanel>

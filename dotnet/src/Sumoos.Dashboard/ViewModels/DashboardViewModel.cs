@@ -8,8 +8,8 @@ public sealed class DashboardViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
     public GatewaySnapshot State { get; private set; } = GatewaySnapshot.Idle;
     public ObservableCollection<LogEntry> Logs { get; } = new();
-    public string Mode => State.Running ? (State.Simulation ? "SIMULATION" : "LIVE HARDWARE") : "OFFLINE";
-    public string Broker => State.Simulation ? "Not used" : State.BrokerConnected ? "Connected" : "Disconnected";
+    public string Mode => State.Running ? (State.NetworkSimulation ? "DOCKER SIMULATION" : State.Simulation ? "SIMULATION" : "LIVE HARDWARE") : "OFFLINE";
+    public string Broker => State.Simulation && !State.NetworkSimulation ? "Not used" : State.BrokerConnected ? "Connected" : "Disconnected";
     public string Controller => State.Simulation ? "Simulated input" : State.SerialConnected ? "USB connected" : "USB disconnected";
     public string Armed => State.Armed ? "ARMED" : "DISARMED";
     public string InputAge => State.InputAgeMs is { } age ? $"{age} ms" : "No input";
@@ -17,7 +17,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged
     public string Right => $"{State.Right:+0;-0;0}%";
     public int LeftMagnitude => Math.Abs(State.Left);
     public int RightMagnitude => Math.Abs(State.Right);
-    public string CountLabel => State.Simulation ? "SIMULATED FRAMES" : "MQTT WRITES";
+    public string CountLabel => State.Simulation && !State.NetworkSimulation ? "SIMULATED FRAMES" : "MQTT WRITES";
     public void Update(GatewaySnapshot state)
     {
         State = state;

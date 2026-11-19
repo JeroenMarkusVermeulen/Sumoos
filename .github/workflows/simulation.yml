@@ -1,0 +1,29 @@
+name: Docker MQTT simulation
+on:
+  push:
+    paths: ['simulation/**', 'dotnet/**', '.github/workflows/simulation.yml']
+  pull_request:
+    paths: ['simulation/**', 'dotnet/**', '.github/workflows/simulation.yml']
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SIM_MQTT_USERNAME: sumoos
+      SIM_MQTT_PASSWORD: local-ci-test-only
+      SUMOOS_MQTT_USERNAME: sumoos
+      SUMOOS_MQTT_PASSWORD: local-ci-test-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: python3 -m unittest discover -s simulation/tests -p test_model.py
+      - run: docker compose -f simulation/compose.yaml up -d --build
+      - run: dotnet run --project simulation/tests/Sumoos.Integration
+      - if: failure()
+        run: docker compose -f simulation/compose.yaml logs --tail=100
+      - if: always()
+        run: docker compose -f simulation/compose.yaml down

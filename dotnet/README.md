@@ -113,7 +113,7 @@ actual WPF window and verifies clean shutdown, catching runtime XAML binding fai
 They do not measure radio delivery or motor stopping distance.
 Communication/RobotPublisher is a deliberately narrow MQTT 3.1.1 publisher, not a
 general MQTT library. It supports broker username/password, clean sessions and QoS 0.
-No TLS, subscriptions or offline storage; use only on the trusted project LAN.
+No TLS or offline storage; status subscription is enabled in Docker simulation only; use only on the trusted project LAN.
 
 Local package downloads were unavailable during development. The complete source was
 compiled/tested in a temporary verification copy using the cached Windows serial
@@ -133,3 +133,11 @@ After pulling this fix, open the repository folder (not just an individual .cs f
 
 Run the interface as before: `dotnet run --project dotnet/src/Sumoos.Dashboard`
 from the repository root. UI layout and robot behavior are unchanged.
+
+## Docker-connected simulation
+
+The separate [simulation guide](../simulation/README.md) runs a real authenticated MQTT broker
+and simulated robot. Select both Simulation and Use Docker MQTT simulator, set port 1884,
+and enter the credentials from simulation/.env. Input and packet shows returned robot status.
+Missing feedback (750 ms), receiver reset or broker loss disarms the gateway; fresh neutral
+input and explicit re-arming are required. Offline simulation and live Arduino mode remain available.
