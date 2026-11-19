@@ -10,7 +10,6 @@
     <header>
         <div class="header-container">
             <a href="index.php" class="logo-link">
-                <img src="images/logo.jpg" alt="Sumoos Logo" class="nav-logo">
                 <span class="logo-text">SUMOOS</span>
             </a>
 

@@ -93,19 +93,28 @@ nav {
     flex: 1;
     display: flex;
     justify-content: flex-end;
-    gap: 40px;
+    align-items: center;
+    gap: 14px;
 }
 
 nav a {
-    color: #ffffff;
+    color: #e0e0e0;
     text-decoration: none;
     font-weight: 600;
-    font-size: 1.1rem;
-    transition: color 0.3s;
+    font-size: 0.95rem;
+    padding: 10px 20px;
+    background-color: #0d1117;
+    border: 1px solid #1f2937;
+    border-radius: 6px;
+    transition: all 0.25s ease;
 }
 
 nav a:hover {
-    color: #0088ff;
+    color: #ffffff;
+    background-color: #0055ff;
+    border-color: #0055ff;
+    box-shadow: 0 0 12px rgba(0, 85, 255, 0.45);
+    transform: translateY(-2px);
 }
 
 main {
