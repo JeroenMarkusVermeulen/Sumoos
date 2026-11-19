@@ -21,3 +21,9 @@ jobs:
       - run: dotnet run --project tests/Sumoos.Checks --configuration Release --no-build
       - name: Dashboard startup and shutdown smoke test
         run: dotnet src/Sumoos.Dashboard/bin/Release/net8.0-windows/Sumoos.Dashboard.dll --smoke-test
+      - name: Verify VS Code design-time XAML compilation
+        shell: pwsh
+        run: |
+          $result = dotnet msbuild src/Sumoos.Dashboard/Sumoos.Dashboard.csproj -m:1 -t:Compile -p:Configuration=Release -p:DesignTimeBuild=true -p:BuildingInsideVisualStudio=false -p:BuildProjectReferences=false -p:SkipCompilerExecution=true -p:ProvideCommandLineArgs=true -getItem:Compile | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "Design-time compilation failed." }
+          if (-not ($result.Items.Compile.Identity -match 'MainWindow\.g(\.i)?\.cs$')) { throw "Language server is missing generated WPF controls." }

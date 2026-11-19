@@ -119,3 +119,17 @@ Local package downloads were unavailable during development. The complete source
 compiled/tested in a temporary verification copy using the cached Windows serial
 assembly. The committed project uses normal NuGet PackageReference for System.IO.Ports.
 GitHub Actions performs the standard restore/build/checks on a clean Windows runner.
+
+## VS Code: missing InitializeComponent or named controls
+
+The dashboard's Directory.Build.targets runs WPF markup generation for language-server
+design-time compilation outside Visual Studio. This provides the actual generated partial
+classes to C# IntelliSense; it does not suppress diagnostics, add fake controls, or change XAML.
+
+After pulling this fix, open the repository folder (not just an individual .cs file), run
+`dotnet build dotnet/Sumoos.sln` from the repository root, then use
+**Ctrl+Shift+P → Developer: Reload Window**. If opening only the dotnet folder, use
+`dotnet build Sumoos.sln` instead. Wait for C# project loading to finish.
+
+Run the interface as before: `dotnet run --project dotnet/src/Sumoos.Dashboard`
+from the repository root. UI layout and robot behavior are unchanged.

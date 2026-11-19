@@ -1,0 +1,8 @@
+<Project>
+  <!-- Generate WPF partial classes during VS Code language-server compilation.
+       Normal builds and Visual Studio already run markup compilation. -->
+  <Target Name="SumoosGenerateXamlForLanguageServer"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="MarkupCompilePass1"
+          Condition="'$(DesignTimeBuild)' == 'true' And '$(BuildingInsideVisualStudio)' != 'true'" />
+</Project>
