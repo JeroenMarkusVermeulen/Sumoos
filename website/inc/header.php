@@ -17,7 +17,7 @@
             
             <div class="header-status">
                 <span class="status-badge">Project Status: Development</span>
-                <p><strong>Phase:</strong> Planning and prototyping. Hardware integration in progress.</p>
+                <p><strong>Phase:</strong> Hardware in progress.</p>
             </div>
 
             <nav>
