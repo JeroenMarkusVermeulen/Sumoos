@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     private Task? worker;
     private int heldLeft, heldRight;
     private bool closing, closingRequested, releaseCapture;
+    private (string Host, string Port, string Username, string Password) hardwareBroker, simulationBroker;
 
     public MainWindow()
     {
@@ -45,15 +46,17 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) { AddLog("WARN", $"Settings could not be loaded ({ex.GetType().Name}); using defaults."); }
         LoadCredentials();
+        BrokerSimulationBox.Checked += BrokerSimulationChanged;
+        BrokerSimulationBox.Unchecked += BrokerSimulationChanged;
         AddLog("INFO", "Ready. Start simulation or configure the Arduino and broker.");
         timer.Tick += (_, _) => Refresh();
         timer.Start();
     }
     private void LoadCredentials()
     {
+        var credentials = new Dictionary<string, string>(StringComparer.Ordinal);
         try
         {
-            var credentials = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (var start in new[] { AppContext.BaseDirectory, Environment.CurrentDirectory })
             {
                 for (var directory = new DirectoryInfo(start); directory is not null; directory = directory.Parent)
@@ -68,7 +71,7 @@ public partial class MainWindow : Window
                         var separator = entry.IndexOf('=');
                         if (separator <= 0) continue;
                         var key = entry[..separator].Trim();
-                        if (key is not ("MQTT_USERNAME" or "MQTT_PASSWORD")) continue;
+                        if (key is not ("MQTT_USERNAME" or "MQTT_PASSWORD" or "SIM_MQTT_USERNAME" or "SIM_MQTT_PASSWORD")) continue;
                         var value = entry[(separator + 1)..].Trim();
                         if (value.Length >= 2 && (value[0] == '"' && value[^1] == '"' || value[0] == '\'' && value[^1] == '\''))
                             value = value[1..^1];
@@ -82,13 +85,33 @@ public partial class MainWindow : Window
                     break;
                 }
             }
-
-            UserBox.Text = credentials.TryGetValue("MQTT_USERNAME", out var username)
-                ? username : Environment.GetEnvironmentVariable("SUMOOS_MQTT_USERNAME") ?? "";
-            PasswordInput.Password = credentials.TryGetValue("MQTT_PASSWORD", out var password)
-                ? password : Environment.GetEnvironmentVariable("SUMOOS_MQTT_PASSWORD") ?? "";
         }
         catch (Exception ex) { AddLog("WARN", $"MQTT credentials could not be loaded ({ex.GetType().Name})."); }
+
+        UserBox.Text = credentials.GetValueOrDefault("MQTT_USERNAME")
+            ?? Environment.GetEnvironmentVariable("SUMOOS_MQTT_USERNAME") ?? "";
+        PasswordInput.Password = credentials.GetValueOrDefault("MQTT_PASSWORD")
+            ?? Environment.GetEnvironmentVariable("SUMOOS_MQTT_PASSWORD") ?? "";
+
+        var simulationUsername = Environment.GetEnvironmentVariable("SIM_MQTT_USERNAME")
+            ?? credentials.GetValueOrDefault("SIM_MQTT_USERNAME");
+        var simulationPassword = Environment.GetEnvironmentVariable("SIM_MQTT_PASSWORD")
+            ?? credentials.GetValueOrDefault("SIM_MQTT_PASSWORD") ?? "";
+        simulationBroker = ("127.0.0.1", "1884", string.IsNullOrEmpty(simulationUsername) ? "sumoos" : simulationUsername, simulationPassword);
+    }
+
+    private void BrokerSimulationChanged(object sender, RoutedEventArgs e)
+    {
+        var current = (HostBox.Text, PortBox.Text, UserBox.Text, PasswordInput.Password);
+        var useSimulation = BrokerSimulationBox.IsChecked == true;
+        var next = useSimulation ? simulationBroker : hardwareBroker;
+        if (useSimulation) hardwareBroker = current;
+        else simulationBroker = current;
+
+        HostBox.Text = next.Host;
+        PortBox.Text = next.Port;
+        UserBox.Text = next.Username;
+        PasswordInput.Password = next.Password;
     }
     private void AddLog(string level, string message) => model.Add(new(DateTimeOffset.Now, level, message));
     private void Refresh()
@@ -117,8 +140,8 @@ public partial class MainWindow : Window
             cancellation = new CancellationTokenSource();
             heldLeft = heldRight = 0; PauseInput.IsChecked = false;
             session.FeedSimulation(0, 0);
-            var user = string.IsNullOrEmpty(UserBox.Text) ? null : UserBox.Text;
-            var password = string.IsNullOrEmpty(PasswordInput.Password) ? null : PasswordInput.Password;
+            var user = networkSimulation || !string.IsNullOrEmpty(UserBox.Text) ? UserBox.Text : null;
+            var password = networkSimulation || !string.IsNullOrEmpty(PasswordInput.Password) ? PasswordInput.Password : null;
             worker = Task.Run(() => session.RunAsync(options, simulation, user, password, cancellation.Token, networkSimulation));
             SettingsPanel.IsEnabled = false; SimControls.IsEnabled = simulation;
             ConnectButton.Content = "Disconnect";

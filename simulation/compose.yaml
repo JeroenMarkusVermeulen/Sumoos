@@ -5,7 +5,7 @@ services:
     ports: ["127.0.0.1:1884:1883"]
     environment:
       SIM_MQTT_USERNAME: ${SIM_MQTT_USERNAME:-sumoos}
-      SIM_MQTT_PASSWORD: ${SIM_MQTT_PASSWORD:?Set SIM_MQTT_PASSWORD in simulation/.env}
+      SIM_MQTT_PASSWORD: ${SIM_MQTT_PASSWORD:?Set SIM_MQTT_PASSWORD in .env}
     entrypoint: ["/bin/sh", "-ec"]
     command:
       - |
@@ -20,4 +20,4 @@ services:
       BROKER_HOST: broker
       ROBOT_ID: bot-2
       SIM_MQTT_USERNAME: ${SIM_MQTT_USERNAME:-sumoos}
-      SIM_MQTT_PASSWORD: ${SIM_MQTT_PASSWORD:?Set SIM_MQTT_PASSWORD in simulation/.env}
+      SIM_MQTT_PASSWORD: ${SIM_MQTT_PASSWORD:?Set SIM_MQTT_PASSWORD in .env}

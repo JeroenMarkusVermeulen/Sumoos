@@ -136,8 +136,10 @@ from the repository root. UI layout and robot behavior are unchanged.
 
 ## Docker-connected simulation
 
-The separate [simulation guide](../simulation/README.md) runs a real authenticated MQTT broker
-and simulated robot. Select both Simulation and Use Docker MQTT simulator, set port 1884,
-and enter the credentials from simulation/.env. Input and packet shows returned robot status.
+The separate [simulation guide](../simulation/README.md) runs an authenticated MQTT broker
+and simulated robot. Select **Simulation** and **Use Docker MQTT simulator**. The dashboard
+defaults to `127.0.0.1:1884` and fills in `SIM_MQTT_USERNAME` and `SIM_MQTT_PASSWORD`
+from the root `.env` or the corresponding environment variables. **Input and packet**
+shows returned robot status.
 Missing feedback (750 ms), receiver reset or broker loss disarms the gateway; fresh neutral
 input and explicit re-arming are required. Offline simulation and live Arduino mode remain available.

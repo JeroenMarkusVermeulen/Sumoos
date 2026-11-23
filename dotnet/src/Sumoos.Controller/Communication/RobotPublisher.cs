@@ -42,8 +42,12 @@ public sealed class RobotPublisher(AppOptions settings, string? username = null,
             await PacketAsync(0x10, body.ToArray(), token);
             var reply = new byte[4];
             await client.GetStream().ReadExactlyAsync(reply, token);
-            if (reply[0] != 0x20 || reply[1] != 2 || reply[2] != 0 || reply[3] != 0)
-                throw new IOException("Broker refused MQTT connection.");
+            if (reply[0] != 0x20 || reply[1] != 2 || reply[2] != 0)
+                throw new IOException("Invalid MQTT connection response.");
+            if (reply[3] is 4 or 5)
+                throw new IOException($"The MQTT broker rejected the credentials (CONNACK {reply[3]}).");
+            if (reply[3] != 0)
+                throw new IOException($"The MQTT broker refused the connection (CONNACK {reply[3]}).");
             if (receiveStatus) {
                 using var subscribe = new MemoryStream();
                 subscribe.WriteByte(0); subscribe.WriteByte(1);

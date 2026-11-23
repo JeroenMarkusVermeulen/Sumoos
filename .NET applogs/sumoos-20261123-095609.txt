@@ -1,0 +1,39 @@
+﻿2026-11-23T09:54:38.2597879+01:00 [INFO] Ready. Start simulation or configure the Arduino and broker.
+2026-11-23T09:55:00.5679331+01:00 [INFO] Docker MQTT simulation started. No physical hardware is used.
+2026-11-23T09:55:00.5711650+01:00 [STATE] Disconnected; re-arm required
+2026-11-23T09:55:00.6080307+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:02.6449178+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:04.6515831+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:06.6439454+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:08.6627885+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:10.7021316+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:12.6942481+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:14.6993214+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:16.7298516+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:18.7311667+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:20.7753801+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:22.8243642+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:24.8393985+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:26.8342660+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:28.8694356+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:30.9126577+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:32.9677418+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:35.0198679+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:37.0783853+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:39.0950379+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:41.1095938+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:43.1014756+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:45.1503527+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:47.2064272+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:49.2291335+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:51.2682385+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:53.2677505+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:55.2730506+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:57.3256073+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:55:59.3791154+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:56:01.4291077+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:56:03.4398344+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:56:05.4892621+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:56:07.5147837+01:00 [ERROR] Connect failed (IOException). Check host, credentials and USB port. Retry in 2s.
+2026-11-23T09:56:08.3763129+01:00 [STATE] Session stopped
+2026-11-23T09:56:08.3763184+01:00 [INFO] Session stopped. Reconnect starts disarmed.

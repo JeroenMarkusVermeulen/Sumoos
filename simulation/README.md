@@ -10,21 +10,24 @@ and motor percentages, not physical movement, traction, sensors or match outcome
 - robot/: Python MQTT robot and its validation/watchdog model.
 - tests/test_model.py: malformed, expired, retained, duplicate and retired-session checks.
 - tests/Sumoos.Integration/: real dashboard gateway + MQTT + Docker failure tests.
-- .env.example: local test credential template; .env is ignored.
 
 ## Start (PowerShell, repository root)
 
-    Copy-Item simulation/.env.example simulation/.env
+Open or create `.env` in the repository root. Keep any existing settings and add
+these entries if they are missing. Choose a local test password for the simulation.
+The file is ignored by Git.
 
-Edit simulation/.env and choose a local test password, then:
+    SIM_MQTT_USERNAME=sumoos
+    SIM_MQTT_PASSWORD=<your-local-test-password>
 
-    docker compose -f simulation/compose.yaml up -d --build
+    docker compose --env-file .env -f simulation/compose.yaml up -d --build
     dotnet run --project dotnet/src/Sumoos.Dashboard
 
 In the dashboard:
 1. Select Simulation and Use Docker MQTT simulator.
-2. Host: localhost; MQTT port: 1884; robot ID: bot-2.
-3. Enter the username/password from simulation/.env.
+2. Confirm host `127.0.0.1`, MQTT port `1884` and robot ID `bot-2`.
+3. The dashboard fills in the simulation credentials from the root `.env` or
+   the `SIM_MQTT_USERNAME` and `SIM_MQTT_PASSWORD` environment variables.
 4. Start session and wait for robot feedback (Input and packet tab).
 5. Arm simulation, then hold the direction buttons. With the default 30% limit,
    forward input 50 produces 15% on each simulated track.
@@ -40,10 +43,10 @@ The robot container may retry for a few seconds while the broker starts.
 
 ## Deliberate faults
 
-    docker compose -f simulation/compose.yaml stop robot
-    docker compose -f simulation/compose.yaml start robot
-    docker compose -f simulation/compose.yaml stop broker
-    docker compose -f simulation/compose.yaml start broker
+    docker compose --env-file .env -f simulation/compose.yaml stop robot
+    docker compose --env-file .env -f simulation/compose.yaml start robot
+    docker compose --env-file .env -f simulation/compose.yaml stop broker
+    docker compose --env-file .env -f simulation/compose.yaml start broker
 
 The gateway disarms when feedback is absent for 750 ms or the receiver reports it
 needs a stop handshake. The robot independently stops after 250 ms without fresh
@@ -92,7 +95,7 @@ Use the local broker; do not expose it to the internet.
 
 ## Stop and remove test containers
 
-    docker compose -f simulation/compose.yaml down
+    docker compose --env-file .env -f simulation/compose.yaml down
 
 Keep ../infrastructure for the real hardware broker. No production services are
 modified by these commands.

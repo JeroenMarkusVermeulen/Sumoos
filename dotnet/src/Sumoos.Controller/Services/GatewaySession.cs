@@ -94,7 +94,9 @@ public sealed class GatewaySession
                         catch (Exception ex) when (!token.IsCancellationRequested)
                         {
                             serial?.Dispose(); serial = null; errors++;
-                            Log("ERROR", $"Connect failed ({ex.GetType().Name}). Check host, credentials and USB port. Retry in 2s.");
+                            Log("ERROR", brokerSimulation
+                                ? $"MQTT connection to {options.BrokerHost}:{options.BrokerPort} failed. {ex.Message} Retry in 2s."
+                                : $"Connect failed ({ex.GetType().Name}). Check host, credentials and USB port. Retry in 2s.");
                             nextConnect = Environment.TickCount64 + 2000;
                         }
                     }
