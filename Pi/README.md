@@ -8,6 +8,11 @@ changes to the Zumo: the Pi connects to the Zumo's micro-USB port with a normal 
 `robot_bridge.py` validates every command with the same model as the Docker simulator
 (`../simulation/robot/model.py`) and forwards only fresh valid ones as `DRIVE,l,r` / `STOP`.
 Losing the broker, Wi-Fi or USB cable stops the robot; it needs a new `stop` handshake afterwards.
+The bridge publishes [v1 robot status](../dotnet/docs/protocol.md#mqtt-status-docker-simulator-and-raspberry-pi-bridge)
+on `sumoos/{ROBOT_ID}/status`. Select **Raspberry Pi (feedback required)** in the dashboard's live
+mode. Readiness requires a validated STOP and a completed USB write. The Zumo sketch does not
+report motor values, boundary events or its boot ID, so a reset that leaves USB writable can go
+undetected by the bridge. Verify USB reset behavior and the Zumo watchdog during bench testing.
 
 ## Pi Zero / Zero W: which micro-USB port is which
 
@@ -48,8 +53,9 @@ Flash `../Arduino/Zumo32U4/Zumo32U4.ino` with `LINK` = `Serial` and `USE_OLED` =
 
     cd ~/Sumoos/Pi && . .venv/bin/activate && python3 robot_bridge.py
 
-Expected output: `Zumo connected on /dev/ttyACM0` and `Connected to broker ...`. Then start the gateway on the
-laptop. Keep the tracks lifted for the first test, and start with a low speed limit.
+Expect `Connected to broker ...`, then start the live session on the laptop. The first STOP command
+opens the Zumo port if available. Expect `Zumo connected on /dev/ttyACM0` and **Robot ready** in the
+dashboard once the bridge reports readiness. Keep the tracks lifted for the first test and use a low speed limit.
 
 ## Troubleshooting
 

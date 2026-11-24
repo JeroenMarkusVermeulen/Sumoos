@@ -1,11 +1,11 @@
 using System.Diagnostics;
-using System.Text.Json;
+using Sumoos.Controller.Communication;
 using Sumoos.Controller.Configuration;
 using Sumoos.Controller.Services;
 
 var gateway=new GatewaySession();
 using var cancellation=new CancellationTokenSource(TimeSpan.FromSeconds(90));
-var run=gateway.RunAsync(new AppOptions { BrokerPort=1884 },true,null,null,cancellation.Token,true);
+var run=gateway.RunAsync(new AppOptions { BrokerHost="127.0.0.1", BrokerPort=1884 },true,null,null,cancellation.Token,true);
 int inputLeft=0,inputRight=0;
 bool inputEnabled=true;
 var feeder=Task.Run(async () => {
@@ -19,16 +19,18 @@ async Task Wait(Func<bool> condition, int l=0,int r=0, bool feed=true) {
     Volatile.Write(ref inputLeft,l); Volatile.Write(ref inputRight,r);
     var until=Environment.TickCount64+15000;
     while(!condition()) {
-        if(Environment.TickCount64>until) throw new Exception("Timed out: "+gateway.Snapshot.Reason+" "+gateway.Snapshot.RobotStatus);
+        if(Environment.TickCount64>until)
+            throw new Exception("Timed out: "+gateway.Snapshot.Reason+" "+gateway.Snapshot.Feedback+
+                Environment.NewLine+string.Join(Environment.NewLine, gateway.Logs.TakeLast(12).Select(entry => entry.Message)));
         if(feed) gateway.FeedSimulation(l,r);
         await Task.Delay(20);
     }
 }
 bool Ready() {
-    try {using var j=JsonDocument.Parse(gateway.Snapshot.RobotStatus);return j.RootElement.GetProperty("ready").GetBoolean();}catch{return false;}
+    return gateway.Snapshot.Feedback.State == FeedbackState.Ready;
 }
 bool RobotMoving() {
-    try {using var j=JsonDocument.Parse(gateway.Snapshot.RobotStatus);return j.RootElement.GetProperty("left").GetInt32()==15;}catch{return false;}
+    return gateway.Snapshot.Feedback.Report?.Left == 15;
 }
 async Task Docker(string command) {
     var start=new ProcessStartInfo("docker") { RedirectStandardOutput=true,RedirectStandardError=true };

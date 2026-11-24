@@ -13,7 +13,7 @@ Our first version pits **one autonomous robot against one manually controlled ro
 a flat, marked arena.
 
 The autonomous robot should find its opponent and drive toward it. A player drives the
-manual robot using an Arduino joystick/buttons controller. Both robots need local boundary
+manual robot using an Arduino MKR handheld controller. Both robots need local boundary
 detection to reduce accidental exits. Being pushed out by the opponent is still how a robot
 loses; boundary protection cannot guarantee that a robot stays inside.
 
@@ -22,10 +22,10 @@ loses; boundary protection cannot guarantee that a robot stays inside.
 | Part | Purpose |
 | --- | --- |
 | Autonomous robot | Detect the opponent, search, approach and push without steering from a player. |
-| Manual robot | Receive the player's drive commands through an ESP32 Wi-Fi bridge. |
-| Arduino controller | Read joystick/buttons and send fresh commands to the laptop over USB serial. |
+| Manual robot | Receive drive commands through a Raspberry Pi USB bridge or MKR UART bridge. |
+| Arduino controller | Read tilt and buttons on the MKR handheld and send commands over USB serial. |
 | .NET Control Room | Connect the controller and broker, forward commands, and show useful diagnostics. |
-| Docker + MQTT | Run the local message broker connecting the laptop to the ESP32. |
+| Docker + MQTT | Run the local message broker connecting the laptop to the robot bridge. |
 | Website | Explain the project, team and idea to visitors. It is separate from robot control. |
 
 The learning goal is to make these parts work reliably together, then demonstrate a match.
@@ -37,10 +37,10 @@ The first milestone is a safe, repeatable local demonstration.
 | --- | --- | --- |
 | Windows dashboard | Styled WPF UI, simulation pad, connection settings, motor intent, packet inspector and exportable logs. | Test against the actual Arduino and robots. |
 | .NET gateway | Serial input validation, MQTT publishing, arming, speed limiting and input timeout. | Complete firmware integration and measure real behavior. |
-| Software checks | 39 automated checks plus a WPF startup/shutdown smoke test in GitHub Actions. | Physical connection-loss, boundary and match tests. |
+| Software checks | Controller and feedback checks, Docker integration tests and a WPF startup/shutdown smoke test. | Physical connection-loss, boundary and match tests. |
 | MQTT infrastructure | Docker Compose and password-protected Mosquitto configuration. | Create a local password file and verify the project network. |
 | Website | Source and Vercel build configuration; [website link](https://sumoos.vercel.app). | Continue the business content as the project develops. |
-| Arduino / ESP32 / Zumo firmware | [Initial interface contract](dotnet/docs/protocol.md) and [hardware planning notes](docs/Sumoos_Project_Information.txt). | Firmware implementation, assembly, calibration and integration. |
+| Controller and robot | [MKR and Zumo 32U4 sketches](Arduino), [Pi bridge](Pi/README.md) and [protocol](dotnet/docs/protocol.md). | Bench integration, calibration and Zumo telemetry. |
 
 **Working software checks do not prove that the physical robots are ready.** Hardware
 purchase/assembly and an end-to-end match have not been confirmed. No measured detection
@@ -48,21 +48,18 @@ range, radio latency, pushing force or win rate is claimed.
 
 ## How the system fits together
 
-![System architecture: Arduino USB input passes through the .NET gateway and Docker MQTT broker to an ESP32 and the manual Zumo; the autonomous robot makes decisions locally](docs/assets/system-architecture.svg)
-
 ### Manual robot
 
 1. The Arduino reads the player's controls and sends newline-terminated commands over USB.
 2. The .NET application validates the input and applies the configured speed limit.
 3. It publishes fresh, non-retained commands to the MQTT broker running in Docker.
-4. The ESP32 receives the commands over the local Wi-Fi network.
-5. The ESP32 forwards validated, fresh commands over UART to the Zumo, which drives its motors.
+4. The Raspberry Pi receives the commands over Wi-Fi and forwards fresh commands to the Zumo 32U4 over USB. It publishes bridge readiness back to the dashboard.
+5. The MKR Wi-Fi bridge is also available. It sends commands to the Zumo 32U4 over UART.
 
 ### Autonomous robot
 
 Opponent detection, search/attack decisions and boundary handling run **on the robot**.
 The autonomous robot does not need the other robot to transmit its position.
-An additional ESP32 for autonomous start/stop or telemetry is an optional later extension.
 
 The dashboard runs on the laptop. Docker hosts the broker. Vercel hosts the informational
 website. The initial design keeps robot control on the local network.
@@ -97,22 +94,20 @@ see the [.NET guide](dotnet/README.md).
 
 ## Connect real hardware
 
-### Proposed hardware
+### Checked-in hardware paths
 
 | Item | Quantity | Role |
 | --- | --- | --- |
-| Pololu Zumo 2040, assembled with 75:1 HP motors | 2 | Matching tracked robot bases with onboard control and sensors. |
-| ESP32 Wi-Fi development board | At least 1 | Network-to-UART bridge on the manual robot. |
-| Arduino board with joystick/buttons | 1 controller | Physical player input, connected to the laptop over USB. |
+| Pololu Zumo 32U4 | 1 manual robot | Tracked robot with the checked-in serial receiver sketch. |
+| Raspberry Pi with Wi-Fi or Arduino MKR bridge | 1 bridge | Wi-Fi to USB serial on the Pi or Wi-Fi to UART on the MKR. |
+| Arduino MKR handheld | 1 controller | Physical tilt and button input over USB. |
 | Windows laptop | 1 | .NET dashboard and Docker MQTT broker. |
 | Battery sets, charger, USB cables, headers and mounting hardware | As required | Power, programming and secure connections. |
 | Local Wi-Fi network and a flat marked arena | 1 of each | Communication and the fighting area. |
 
-The Zumo 2040 does not have built-in Wi-Fi; the ESP32 supplies the wireless connection.
-The exact Arduino/ESP32 variants, arena dimensions, boundary appearance and final budget
-still need agreement. See the [Zumo 2040 product](https://www.pololu.com/product/5012) and
-[hardware planning notes](docs/Sumoos_Project_Information.txt). Verify board-specific wiring
-and power requirements before assembly.
+Use the [Pi setup](Pi/README.md) or the [MKR bridge sketch](Arduino/ZumoBridge/ZumoBridge.ino)
+for the relevant board and link. The [original hardware plan](docs/Sumoos_Project_Information.txt)
+describes the earlier Zumo 2040 and ESP32 proposal.
 
 ### Start the broker
 
@@ -131,17 +126,17 @@ Then start and inspect the broker:
     docker compose -f infrastructure/compose.yaml logs -f broker
 
 Configure the dashboard with the same username/password and the Arduino's USB port.
-Use localhost for the dashboard if Docker runs on the same laptop. The ESP32 uses the
-laptop's **LAN address**, not localhost. Verify device-to-device access on the actual
+Use localhost for the dashboard if Docker runs on the same laptop. Configure the bridge
+with the laptop's **LAN address**. Verify device-to-device access on the actual
 Wi-Fi network; school networks can isolate clients.
 
 The initial broker uses authenticated, plaintext MQTT on port 1883 for a trusted LAN.
 Do not expose it to the public internet or commit passwords/Wi-Fi credentials.
 
-Before live driving, the Arduino, ESP32 and Zumo firmware must implement the
-[protocol contract](dotnet/docs/protocol.md). Disconnect the dashboard session,
-deselect Simulation, configure the hardware and reconnect. The on-screen pad is
-disabled in live mode; the physical Arduino controller arms and drives the robot.
+Before live driving, verify the wired and wireless links against the
+[protocol contract](dotnet/docs/protocol.md). Disconnect the dashboard session, deselect
+**Simulation**, choose the live bridge and start the session. The physical MKR controller
+arms and drives the robot. See [dashboard setup](dotnet/README.md) for feedback and diagnostics.
 
 ## Control rules and safety
 
@@ -174,12 +169,10 @@ against the real arena. Autonomous decisions and boundary checks stay local to t
 | [dotnet/src/Sumoos.Core/](dotnet/src/Sumoos.Core/) | Hardware-independent validation, arming and timeout logic. |
 | [dotnet/tests/](dotnet/tests/) | Executable automated software checks. |
 | [infrastructure/](infrastructure/) | Docker Compose and Mosquitto configuration. |
+| [Arduino/](Arduino/) and [Pi/](Pi/) | Controller and Zumo sketches, plus the MKR and Raspberry Pi bridges. |
 | [website/](website/) | Business website source and Vercel configuration. |
 | [docs/](docs/) | Pitch, requirements, planning notes and project diagrams. |
 | [.github/workflows/dotnet.yml](.github/workflows/dotnet.yml) | Clean build, automated checks and dashboard startup/shutdown smoke test. |
-
-Robot firmware directories will be added when their implementation is available; they
-are not included in the current repository.
 
 ### Build and check the software
 
@@ -228,7 +221,7 @@ future extensions. The current desktop simulation pad does not replace the Ardui
 The next integration milestones are:
 
 1. Confirm hardware variants, arena and match rules.
-2. Implement and bench-test the Arduino/ESP32/Zumo firmware against the agreed protocol.
+2. Bench-test the MKR controller, selected bridge and Zumo firmware against the agreed protocol.
 3. Demonstrate low-speed driving through the complete manual-control chain.
 4. Calibrate autonomous opponent detection and boundary protection.
 5. Pass disconnect/reset tests, then run a controlled match.
@@ -249,5 +242,5 @@ not photographs or wiring diagrams. Licensing information is in [docs/LICENSE](d
 
 See [simulation/README.md](simulation/README.md) for the separate MQTT broker, robot simulator,
 status feedback and deliberate restart tests. In the dashboard select Simulation plus
-Use Docker MQTT simulator, use localhost:1884 and the simulation credentials.
+Use Docker MQTT simulator to select `127.0.0.1:1884` and the simulation credentials.
 The simulator reports virtual motor percentages, not physical motion or sensor measurements.

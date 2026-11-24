@@ -9,7 +9,10 @@ client=mqtt.Client(mqtt.CallbackAPIVersion.VERSION2,client_id="sumoos-simulator-
 client.username_pw_set(os.environ["SIM_MQTT_USERNAME"],os.environ["SIM_MQTT_PASSWORD"])
 topic="sumoos/"+robot.robot_id
 def connected(c,u,flags,reason,properties):
-    with lock: robot.stop("broker connected; stop handshake required")
+    global boot
+    with lock:
+        boot = uuid.uuid4().hex
+        robot.stop("broker connected; stop handshake required")
     if not reason.is_failure: c.subscribe(topic+"/command",qos=0)
 def disconnected(c,u,flags,reason,properties):
     with lock: robot.stop("broker disconnected")
@@ -27,8 +30,7 @@ try:
     while True:
         with lock:
             robot.tick()
-            payload=robot.status()
-            payload["bootId"]=boot
+            payload=robot.status(boot, simulated=True)
         if client.is_connected(): client.publish(topic+"/status",json.dumps(payload),qos=0,retain=False)
         time.sleep(.05)
 finally:

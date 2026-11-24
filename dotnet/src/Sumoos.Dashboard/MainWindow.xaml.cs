@@ -20,6 +20,7 @@ public partial class MainWindow : Window
     private GatewaySession? session;
     private CancellationTokenSource? cancellation;
     private Task? worker;
+    private Task? stopping;
     private int heldLeft, heldRight;
     private bool closing, closingRequested, releaseCapture;
     private (string Host, string Port, string Username, string Password) hardwareBroker, simulationBroker;
@@ -48,6 +49,11 @@ public partial class MainWindow : Window
         LoadCredentials();
         BrokerSimulationBox.Checked += BrokerSimulationChanged;
         BrokerSimulationBox.Unchecked += BrokerSimulationChanged;
+        SimulationBox.Checked += ModeSelectionChanged;
+        SimulationBox.Unchecked += ModeSelectionChanged;
+        PiBridgeOption.Checked += ModeSelectionChanged;
+        MkrBridgeOption.Checked += ModeSelectionChanged;
+        UpdateModeSelection();
         AddLog("INFO", "Ready. Start simulation or configure the Arduino and broker.");
         timer.Tick += (_, _) => Refresh();
         timer.Start();
@@ -112,6 +118,26 @@ public partial class MainWindow : Window
         PortBox.Text = next.Port;
         UserBox.Text = next.Username;
         PasswordInput.Password = next.Password;
+        UpdateModeSelection();
+    }
+
+    private OperatingMode SelectedMode => SimulationBox.IsChecked == true
+        ? BrokerSimulationBox.IsChecked == true ? OperatingMode.DockerSimulation : OperatingMode.OfflineSimulation
+        : MkrBridgeOption.IsChecked == true ? OperatingMode.LiveMkr : OperatingMode.LivePi;
+
+    private void ModeSelectionChanged(object sender, RoutedEventArgs e)
+    {
+        if (SimulationBox.IsChecked != true && BrokerSimulationBox.IsChecked == true)
+            BrokerSimulationBox.IsChecked = false;
+        UpdateModeSelection();
+    }
+
+    private void UpdateModeSelection()
+    {
+        var simulation = SimulationBox.IsChecked == true;
+        BrokerSimulationBox.IsEnabled = simulation;
+        LiveBridgePanel.Visibility = simulation ? Visibility.Collapsed : Visibility.Visible;
+        model.SelectMode(SelectedMode);
     }
     private void AddLog(string level, string message) => model.Add(new(DateTimeOffset.Now, level, message));
     private void Refresh()
@@ -133,16 +159,18 @@ public partial class MainWindow : Window
                 BaudRate = int.Parse(BaudBox.Text), MaxSpeedPercent = (int)SpeedSlider.Value
             };
             options.Validate();
-            var simulation = SimulationBox.IsChecked == true;
-            var networkSimulation = BrokerSimulationBox.IsChecked == true;
-            if (networkSimulation && !simulation) throw new ArgumentException("Select Simulation to use the Docker simulator.");
+            var mode = SelectedMode;
+            var simulation = mode is OperatingMode.OfflineSimulation or OperatingMode.DockerSimulation;
+            var networkSimulation = mode == OperatingMode.DockerSimulation;
             session = new GatewaySession();
             cancellation = new CancellationTokenSource();
             heldLeft = heldRight = 0; PauseInput.IsChecked = false;
             session.FeedSimulation(0, 0);
             var user = networkSimulation || !string.IsNullOrEmpty(UserBox.Text) ? UserBox.Text : null;
             var password = networkSimulation || !string.IsNullOrEmpty(PasswordInput.Password) ? PasswordInput.Password : null;
-            worker = Task.Run(() => session.RunAsync(options, simulation, user, password, cancellation.Token, networkSimulation));
+            var token = cancellation.Token;
+            var currentSession = session;
+            worker = Task.Run(() => currentSession.RunAsync(options, mode, user, password, token));
             SettingsPanel.IsEnabled = false; SimControls.IsEnabled = simulation;
             ConnectButton.Content = "Disconnect";
             await Task.Delay(100);
@@ -155,11 +183,23 @@ public partial class MainWindow : Window
         if (worker is null) return;
         ConnectButton.IsEnabled = false;
         heldLeft = heldRight = 0; session?.RequestStop(); cancellation?.Cancel();
-        try { await worker; }
+        stopping ??= FinishStopSession(worker);
+        try { await stopping.WaitAsync(TimeSpan.FromSeconds(3)); }
+        catch (TimeoutException)
+        {
+            AddLog("WARN", "Disconnect is waiting for device cleanup. Robot watchdog must stop motors.");
+        }
+    }
+
+    private async Task FinishStopSession(Task runningWorker)
+    {
+        // Defer cleanup so StopSession can publish the shared task even if the worker already exited.
+        await Task.Yield();
+        try { await runningWorker; }
         catch (Exception ex) { AddLog("ERROR", $"Session ended ({ex.GetType().Name})."); }
         finally
         {
-            Refresh(); worker = null; cancellation?.Dispose(); cancellation = null;
+            Refresh(); worker = null; stopping = null; cancellation?.Dispose(); cancellation = null;
             SimControls.IsEnabled = false; SettingsPanel.IsEnabled = true;
             ConnectButton.Content = "Start session"; ConnectButton.IsEnabled = true;
         }

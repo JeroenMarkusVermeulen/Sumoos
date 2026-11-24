@@ -7,6 +7,7 @@ using Sumoos.Controller.Communication;
 using Sumoos.Controller.Input;
 
 var simulation = args.Contains("--simulate");
+var piFeedback = !simulation && args.Contains("--pi-feedback");
 var settings = JsonSerializer.Deserialize<AppOptions>(
     await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "appsettings.json")))
     ?? throw new InvalidOperationException("Missing settings.");
@@ -18,11 +19,12 @@ var input = Channel.CreateBounded<string>(16);
 _ = Task.Run(async () => { while (Console.ReadLine() is { } line) await input.Writer.WriteAsync(line); input.Writer.TryComplete(); });
 var state = new ControlState();
 var clock = Stopwatch.StartNew();
-using var mqtt = simulation ? null : new RobotPublisher(settings);
+using var mqtt = simulation ? null : new RobotPublisher(settings, receiveStatus: piFeedback, simulated: false);
 ArduinoInput? serial = null;
 long nextConnect = 0;
 string previous = "";
-Console.WriteLine($"Sumoos | {(simulation ? "SIMULATION (no hardware/network)" : "LIVE USB -> MQTT")} | speed limit {settings.MaxSpeedPercent}%");
+var previousFeedback = new FeedbackSnapshot(FeedbackState.Waiting);
+Console.WriteLine($"Sumoos | {(simulation ? "OFFLINE SIMULATION" : piFeedback ? "LIVE USB -> PI (feedback required)" : "LIVE USB -> MQTT (command only)")} | speed limit {settings.MaxSpeedPercent}%");
 Console.WriteLine("status | stop | quit. Simulation: DRIVE,0,0 then ARM then fresh DRIVE,l,r every 50ms.");
 try
 {
@@ -43,11 +45,17 @@ try
             {
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancel.Token);
                 timeout.CancelAfter(2000);
-                if (!mqtt!.Connected) await mqtt.ConnectAsync(timeout.Token);
+                if (!mqtt!.Connected)
+                {
+                    await mqtt.ConnectAsync(timeout.Token);
+                    previousFeedback = new(FeedbackState.Waiting);
+                }
                 serial?.Dispose(); serial = new ArduinoInput(settings.SerialPort, settings.BaudRate);
                 serial.Open(); state.Stop("connected; neutral + ARM required");
                 await mqtt.SendAsync(false, 0, 0, timeout.Token);
             }
+            catch (BrokerCredentialsException)
+            { Console.WriteLine("Broker rejected MQTT credentials."); nextConnect = clock.ElapsedMilliseconds + 2000; continue; }
             catch (Exception ex) when (!cancel.IsCancellationRequested)
             { serial?.Dispose(); serial = null; Console.WriteLine($"Connection failed ({ex.GetType().Name}). Check broker credentials and serial port."); nextConnect = clock.ElapsedMilliseconds + 2000; continue; }
         }
@@ -55,8 +63,25 @@ try
         state.Tick(now);
         try
         {
+            var feedback = piFeedback ? mqtt!.Feedback(Environment.TickCount64) : null;
             if (serial is not null)
-                foreach (var line in serial.Read()) state.Apply(line, now);
+            {
+                if (feedback is not null && (feedback.State != FeedbackState.Ready ||
+                    previousFeedback.State != FeedbackState.Ready || previousFeedback.FaultCount != feedback.FaultCount))
+                {
+                    state.Stop(feedback.State == FeedbackState.Ready ? "robot ready; explicit arm required" : "waiting for robot feedback");
+                    serial.Clear();
+                }
+                else
+                {
+                    foreach (var line in serial.Read())
+                    {
+                        var accepted = state.Apply(line, now);
+                        if (line == "STOP" || (!accepted && line != "ARM")) break;
+                    }
+                }
+            }
+            if (feedback is not null) previousFeedback = feedback;
             while (input.Reader.TryRead(out var line))
             {
                 if (line == "quit") { cancel.Cancel(); break; }

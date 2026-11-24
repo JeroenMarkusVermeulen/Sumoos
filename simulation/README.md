@@ -80,7 +80,8 @@ Windows CI separately builds and smoke-tests the WPF dashboard.
 
 ## Protocol
 
-Commands use ../dotnet/docs/protocol.md and sumoos/bot-2/command.
+See the [shared command and feedback protocol](../dotnet/docs/protocol.md).
+Commands use `sumoos/bot-2/command`.
 Feedback is non-retained QoS0 on sumoos/bot-2/status, every 50 ms:
 
     {"version":1,"robotId":"bot-2","simulated":true,"bootId":"unique-boot",

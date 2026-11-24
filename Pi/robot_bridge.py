@@ -18,6 +18,7 @@ import os
 import sys
 import threading
 import time
+import uuid
 from pathlib import Path
 
 import paho.mqtt.client as mqtt
@@ -58,6 +59,7 @@ robot = Robot(ROBOT_ID)
 lock = threading.Lock()
 last_sent_drive = False   # the Zumo is running on a DRIVE we forwarded
 last_log = 0.0
+boot_id = uuid.uuid4().hex
 
 
 def log(message):
@@ -89,7 +91,9 @@ class ZumoLink:
         if not self.ensure():
             return False
         try:
-            self.port.write((line + "\n").encode("ascii"))
+            data = (line + "\n").encode("ascii")
+            if self.port.write(data) != len(data):
+                raise OSError("Incomplete controller write")
             return True
         except (serial.SerialException, OSError):
             log("Zumo link lost")
@@ -106,18 +110,22 @@ link = ZumoLink(SERIAL_PORT, SERIAL_BAUD)
 
 def forward():
     """Send the robot's current state to the Zumo. Call with the lock held."""
-    global last_sent_drive
+    global last_sent_drive, boot_id
     driving = robot.reason == "drive"
     line = f"DRIVE,{robot.left},{robot.right}" if driving else "STOP"
+    had_link = link.port is not None
     sent = link.send(line)
-    if driving and not sent:
-        robot.stop("zumo link down")          # cannot reach the Zumo: do not stay 'driving'
-        driving = False
-    last_sent_drive = driving
+    if not sent:
+        if had_link:
+            boot_id = uuid.uuid4().hex
+        robot.stop("Zumo USB link unavailable")
+    last_sent_drive = driving and sent
 
 
 def on_connect(client, userdata, flags, reason, properties):
+    global boot_id
     with lock:
+        boot_id = uuid.uuid4().hex
         robot.stop("broker connected; stop handshake required")
         forward()
     if reason.is_failure:
@@ -164,13 +172,21 @@ def main():
     client.reconnect_delay_set(1, 3)
     client.connect_async(BROKER_HOST, BROKER_PORT, keepalive=10)
     client.loop_start()
+    topic = f"sumoos/{ROBOT_ID}/status"
+    next_status = 0.0
     try:
         while True:
+            now = time.monotonic()
             with lock:
-                robot.tick()                       # 250 ms without a fresh drive -> stop
+                robot.tick(now)                    # 250 ms without a fresh drive -> stop
                 if last_sent_drive and robot.reason != "drive":
                     forward()                      # tell the Zumo to STOP now
-            link.ensure()
+                if now >= next_status:
+                    payload = robot.status(boot_id, simulated=False)
+            if now >= next_status:
+                if client.is_connected():
+                    client.publish(topic, json.dumps(payload), qos=0, retain=False)
+                next_status = now + 0.05
             time.sleep(0.02)
     except KeyboardInterrupt:
         pass

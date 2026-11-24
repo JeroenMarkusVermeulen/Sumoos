@@ -28,6 +28,12 @@
       <StackPanel x:Name="SettingsPanel">
        <CheckBox x:Name="SimulationBox" IsChecked="True" Content="Simulation • no hardware" AutomationProperties.Name="Simulation mode"/>
        <CheckBox x:Name="BrokerSimulationBox" Content="Use Docker MQTT simulator" FontSize="11"/>
+       <StackPanel x:Name="LiveBridgePanel" Visibility="Collapsed" Margin="0,0,0,8">
+        <TextBlock Text="LIVE HARDWARE BRIDGE" Style="{StaticResource Caption}"/>
+        <RadioButton x:Name="PiBridgeOption" GroupName="LiveBridge" IsChecked="True" Foreground="#D8E3F3" Content="Raspberry Pi (feedback required)" Margin="0,0,0,5"/>
+        <RadioButton x:Name="MkrBridgeOption" GroupName="LiveBridge" Foreground="#D8E3F3" Content="MKR (command only)"/>
+       </StackPanel>
+       <TextBlock Text="{Binding ModeSetup}" TextWrapping="Wrap" Style="{StaticResource Caption}" Margin="0,0,0,12"/>
        <TextBlock Text="BROKER HOST" Style="{StaticResource Caption}"/><TextBox x:Name="HostBox" Text="localhost" AutomationProperties.Name="Broker host"/>
        <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
         <StackPanel><TextBlock Text="MQTT PORT" Style="{StaticResource Caption}"/><TextBox x:Name="PortBox" Text="1883" AutomationProperties.Name="MQTT port"/></StackPanel>
@@ -43,8 +49,7 @@
        <DockPanel Margin="0,0,0,14"><TextBlock DockPanel.Dock="Right" Text="{Binding ElementName=SpeedSlider, Path=Value, StringFormat={}{0:0}%}" Width="38"/><Slider x:Name="SpeedSlider" Minimum="5" Maximum="100" Value="30" TickFrequency="5" IsSnapToTickEnabled="True" AutomationProperties.Name="Speed limit"/></DockPanel>
       </StackPanel>
       <Button x:Name="ConnectButton" Content="Start session" Background="#226D65" Click="ConnectClicked" Margin="0,0,0,8"/>
-      <TextBlock Text="Settings apply to the next session. Passwords stay in memory; empty fields use environment credentials." TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,8,0,12"/>
-      <Border Background="#101724" CornerRadius="8" Padding="12"><TextBlock Text="Docker simulation provides robot feedback. Hardware telemetry is not connected. Motor values show outgoing intent." TextWrapping="Wrap" Foreground="#C9B9F5" FontSize="11"/></Border>
+      <TextBlock Text="Disconnect to change connection settings." TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,8,0,12"/>
      </StackPanel>
     </ScrollViewer>
    </Border>
@@ -52,15 +57,15 @@
     <Grid.RowDefinitions><RowDefinition Height="94"/><RowDefinition Height="16"/><RowDefinition Height="252"/><RowDefinition Height="16"/><RowDefinition Height="*"/></Grid.RowDefinitions>
     <UniformGrid Columns="4">
      <Border Style="{StaticResource Card}" Margin="0,0,10,0" Padding="15"><StackPanel><TextBlock Text="MQTT BROKER" Style="{StaticResource Caption}"/><TextBlock Text="{Binding Broker}" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/><TextBlock Text="Gateway connection" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,5,0,0"/></StackPanel></Border>
-     <Border Style="{StaticResource Card}" Margin="0,0,10,0" Padding="15"><StackPanel><TextBlock Text="CONTROLLER" Style="{StaticResource Caption}"/><TextBlock Text="{Binding Controller}" FontSize="16" FontWeight="SemiBold"/><TextBlock Text="Arduino / simulated" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,5,0,0"/></StackPanel></Border>
+     <Border Style="{StaticResource Card}" Margin="0,0,10,0" Padding="15"><StackPanel><TextBlock Text="CONTROLLER USB" Style="{StaticResource Caption}"/><TextBlock Text="{Binding Controller}" FontSize="16" FontWeight="SemiBold"/><TextBlock Text="{Binding InputAge}" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,5,0,0"/></StackPanel></Border>
      <Border Style="{StaticResource Card}" Margin="0,0,10,0" Padding="15"><StackPanel><TextBlock Text="MOTION STATE" Style="{StaticResource Caption}"/><TextBlock Text="{Binding Armed}" FontSize="18" FontWeight="Bold" Foreground="#C7B4FF"/><TextBlock Text="Explicit arm required" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,5,0,0"/></StackPanel></Border>
-     <Border Style="{StaticResource Card}" Padding="15"><StackPanel><TextBlock Text="LAST INPUT AGE" Style="{StaticResource Caption}"/><TextBlock Text="{Binding InputAge}" FontSize="18" FontWeight="SemiBold"/><TextBlock Text="250 ms stop timeout" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,5,0,0"/></StackPanel></Border>
+     <Border Style="{StaticResource Card}" Padding="15"><StackPanel><TextBlock Text="ROBOT FEEDBACK" Style="{StaticResource Caption}"/><TextBlock Text="{Binding RobotState}" FontSize="16" FontWeight="SemiBold"/><TextBlock Text="{Binding FeedbackSource}" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,5,0,0"/></StackPanel></Border>
     </UniformGrid>
     <Grid Grid.Row="2">
      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="290"/></Grid.ColumnDefinitions>
      <Border Style="{StaticResource Card}">
       <StackPanel>
-       <TextBlock Text="Drive output" FontSize="18" FontWeight="SemiBold"/>
+       <TextBlock Text="Commanded drive output" FontSize="18" FontWeight="SemiBold"/>
        <TextBlock Text="Signed motor percentages • speed limit applied" Style="{StaticResource Caption}" Margin="0,5,0,18"/>
        <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="30"/><ColumnDefinition/></Grid.ColumnDefinitions>
         <StackPanel><TextBlock Text="LEFT TRACK" Style="{StaticResource Caption}"/><TextBlock Text="{Binding Left}" FontSize="42" FontWeight="Light" Foreground="{StaticResource Accent}"/><ProgressBar Value="{Binding LeftMagnitude, Mode=OneWay}" Maximum="100" Height="7" Background="#293449" Foreground="#6EE7CE" BorderThickness="0"/></StackPanel>
@@ -105,7 +110,7 @@
        <TabItem Header="  Input and packet  ">
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14">
          <StackPanel>
-          <TextBlock Text="ROBOT FEEDBACK (SIMULATED)" Style="{StaticResource Caption}"/><TextBox Text="{Binding State.RobotStatus, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding FeedbackSource}" Style="{StaticResource Caption}"/><TextBox Text="{Binding FeedbackDetails, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
           <TextBlock Text="LAST CONTROLLER LINE" Style="{StaticResource Caption}"/>
           <TextBox Text="{Binding State.LastInput, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas"/>
           <DockPanel Margin="0,0,0,12"><TextBlock Text="{Binding CountLabel}" Foreground="{StaticResource Muted}"/><TextBlock Text="{Binding State.Sent}" Margin="12,0,22,0" Foreground="{StaticResource Accent}"/><TextBlock Text="ERRORS" Foreground="{StaticResource Muted}"/><TextBlock Text="{Binding State.Errors}" Margin="12,0,0,0" Foreground="#FF9AAE"/></DockPanel>
@@ -121,7 +126,7 @@
    </Grid>
   </Grid>
   <DockPanel Grid.Row="2" VerticalAlignment="Bottom">
-   <TextBlock Text="USB SERIAL  →  .NET GATEWAY  →  MQTT  →  ESP32  →  ZUMO" FontSize="10" Foreground="{StaticResource Muted}"/>
+   <TextBlock Text="{Binding ConnectionPath}" FontSize="10" Foreground="{StaticResource Muted}"/>
    <TextBlock Text="LOCAL NETWORK  •  ROBOT WATCHDOG REQUIRED" FontSize="10" Foreground="{StaticResource Muted}" HorizontalAlignment="Right"/>
   </DockPanel>
  </Grid>

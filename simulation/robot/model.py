@@ -59,6 +59,7 @@ class Robot:
             self.stop("rejected command")
             return False
 
-    def status(self):
-        return dict(version=1, robotId=self.robot_id, simulated=True, sessionId=self.session,
-                    sequence=self.sequence, ready=self.ready, left=self.left,right=self.right,reason=self.reason)
+    def status(self, boot_id, simulated):
+        return dict(version=1, robotId=self.robot_id, simulated=simulated, bootId=boot_id,
+                    sessionId=self.session, sequence=self.sequence, ready=self.ready, reason=self.reason,
+                    left=self.left if simulated else None, right=self.right if simulated else None)
