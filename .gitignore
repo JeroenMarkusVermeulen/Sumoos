@@ -1,2 +1,3 @@
 /infrastructure/mosquitto/config/passwords
 .env
+/Pi/bridge.env.example
