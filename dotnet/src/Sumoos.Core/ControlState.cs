@@ -10,7 +10,10 @@ public sealed class ControlState
     private long lastDrive;
     private bool hasDrive;
     public void Stop(string reason) { Armed = false; Left = Right = 0; hasDrive = false; Reason = reason; }
-    public void Tick(long now) { if (Armed && now - lastDrive >= 250) Stop("controller timeout"); }
+    public void Tick(long now) 
+    { 
+        if (Armed && now - lastDrive >= 250) Stop("controller timeout"); 
+    }
     public bool Apply(string line, long now)
     {
         Tick(now);
